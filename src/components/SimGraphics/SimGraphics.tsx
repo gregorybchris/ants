@@ -6,10 +6,11 @@ import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/ant";
 import Box from "../../lib/box";
+import { useAnimationFrame } from "./animation";
 
 interface SimGraphicsProps {
   running: boolean;
-  onUpdate: (currentTime: number, deltaTime: number) => void;
+  onUpdate: (deltaTime: number) => void;
   ants: Ant[];
 }
 
@@ -17,13 +18,13 @@ export default function SimGraphics(props: SimGraphicsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasSize, setCanvasSize] = useState<Box>({ width: 0, height: 0 });
 
+  useAnimationFrame(props.onUpdate, props.running);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
       setCanvasSize({ width: canvas.width, height: canvas.height });
     }
-
-    getUpdate(props.onUpdate)(0);
   }, []);
 
   useEffect(() => {
@@ -52,18 +53,6 @@ export default function SimGraphics(props: SimGraphicsProps) {
       context.fillStyle = colorToHex(color);
       context.fill();
     });
-  };
-
-  const getUpdate = (onUpdate: (currentTime: number, deltaTime: number) => void) => {
-    let lastTime = 0;
-    const update = (currentTime: number) => {
-      currentTime = currentTime || 0;
-      const deltaTime = currentTime - (lastTime || 0);
-      lastTime = currentTime;
-      onUpdate(currentTime, deltaTime);
-      requestAnimationFrame(update);
-    };
-    return update;
   };
 
   return (

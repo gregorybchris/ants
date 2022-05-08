@@ -1,9 +1,9 @@
 import "@fontsource/poppins";
 
+import Keyboard, { KeyName } from "../../lib/keyboard";
 import { useEffect, useState } from "react";
 
 import Ant from "../../lib/ant";
-import Keyboard from "../../lib/keyboard";
 import SimGraphics from "../SimGraphics/SimGraphics";
 
 export default function Sim() {
@@ -12,7 +12,7 @@ export default function Sim() {
   const [ants, setAnts] = useState<Ant[]>([]);
 
   useEffect(() => {
-    new Keyboard((keyName) => {
+    const onKeyPress = (keyName: KeyName) => {
       if (keyName == Keyboard.Keys.LETTER_P) {
         setRunning((prevRunning) => !prevRunning);
       }
@@ -27,7 +27,8 @@ export default function Sim() {
           return [...prevAnts, newAnt];
         });
       }
-    });
+    };
+    new Keyboard(onKeyPress);
 
     const newAnts = [
       {
@@ -37,20 +38,18 @@ export default function Sim() {
     setAnts(newAnts);
   }, []);
 
-  const onUpdate = (currentTime: number, deltaTime: number) => {
-    if (running) {
-      setTicks((prevTicks) => prevTicks + 1);
-      setAnts((prevAnts: Ant[]) => {
-        return prevAnts.map((ant: Ant) => {
-          return { ...ant, position: { x: ant.position.x + 1, y: ant.position.y } };
-        });
+  const update = (deltaTime: number) => {
+    setTicks((prevTicks) => prevTicks + 1);
+    setAnts((prevAnts: Ant[]) => {
+      return prevAnts.map((ant: Ant) => {
+        return { ...ant, position: { x: ant.position.x + 1, y: ant.position.y } };
       });
-    }
+    });
   };
 
   return (
     <div className="Sim">
-      <SimGraphics onUpdate={onUpdate} running={running} ants={ants} />
+      <SimGraphics onUpdate={update} running={running} ants={ants} />
     </div>
   );
 }

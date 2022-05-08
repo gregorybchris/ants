@@ -1,0 +1,34 @@
+// Based on chrome's tab group colors
+export enum Color {
+  BLUE = "blue",
+  CYAN = "cyan",
+  GREEN = "green",
+  GREY = "grey",
+  PINK = "pink",
+  PURPLE = "purple",
+  RED = "red",
+  YELLOW = "yellow",
+}
+
+export function colorToHex(color: Color) {
+  switch (color) {
+    case Color.BLUE:
+      return "#3498db";
+    case Color.CYAN:
+      return "#00d2d3";
+    case Color.GREEN:
+      return "#2ecc71";
+    case Color.GREY:
+      return "#8395a7";
+    case Color.PINK:
+      return "#f368e0";
+    case Color.PURPLE:
+      return "#9b59b6";
+    case Color.RED:
+      return "#e74c3c";
+    case Color.YELLOW:
+      return "#f1c40f";
+    default:
+      return "#ffffff";
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "name": "ants",
+  "version": "0.1.0",
+  "description": "Ants Simulation",
+  "repository": "git+https://github.com/gregorybchris/ants.git",
+  "homepage": "https:a//github.com/gregorybchris/ants#readme",
+  "main": "src/index.ts",
+  "keywords": [
+    "ants",
+    "simulation"
+  ],
+  "author": "Chris Gregory",
+  "license": "ISC",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.9.0",
+    "@emotion/styled": "^11.8.1",
+    "@fontsource/poppins": "^4.5.0",
+    "@mui/icons-material": "^5.6.0",
+    "@mui/material": "^5.6.0",
+    "@types/node": "^17.0.21",
+    "@types/react": "^17.0.38",
+    "@types/react-dom": "^17.0.11",
+    "copy-webpack-plugin": "^10.2.4",
+    "mini-css-extract-plugin": "^2.6.0",
+    "postcss-loader": "^6.2.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^6.2.2",
+    "stream-browserify": "^3.0.0",
+    "typescript": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.180",
+    "@webpack-cli/serve": "^1.6.1",
+    "autoprefixer": "^10.4.4",
+    "css-loader": "^6.5.1",
+    "html-webpack-plugin": "^5.5.0",
+    "postcss": "^8.4.12",
+    "sass": "^1.45.2",
+    "sass-loader": "^12.4.0",
+    "style-loader": "^3.3.1",
+    "tailwindcss": "^3.0.23",
+    "ts-loader": "^9.2.6",
+    "ts-node": "^10.4.0",
+    "url-loader": "^4.1.1",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.7.2"
+  },
+  "scripts": {
+    "start": "webpack serve --open --mode development",
+    "build": "webpack --mode production",
+    "serve": "serve dist -p 3001",
+    "clean": "rm -rf dist"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

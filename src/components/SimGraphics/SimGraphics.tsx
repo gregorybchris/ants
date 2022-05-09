@@ -8,12 +8,13 @@ import Ant from "../../lib/sim/ant";
 import Box from "../../lib/data/box";
 import Point from "../../lib/data/point";
 import PointRange from "../../lib/data/point-range";
+import { World } from "../../lib/sim/world";
 import { useAnimationFrame } from "./animation";
 
 interface SimGraphicsProps {
   running: boolean;
   onUpdate: (deltaTime: number) => void;
-  ants: Ant[];
+  world: World;
   bounds: PointRange;
 }
 
@@ -43,7 +44,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
     if (canvas && context) {
       renderScene(context);
     }
-  }, [props.ants]);
+  }, [props.world]);
 
   const resetCanvasSize = () => {
     const canvas = canvasRef.current;
@@ -72,7 +73,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
     const color = Color.RED;
 
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
-    props.ants.forEach((ant: Ant) => {
+    props.world.ants.forEach((ant: Ant) => {
       context.beginPath();
       const position = scaleToCanvas(ant.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);

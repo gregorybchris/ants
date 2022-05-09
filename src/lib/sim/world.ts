@@ -1,36 +1,21 @@
-import Entity from "./entity";
+import Ant from "./ant";
 import Point from "../data/point";
 import PointRange from "../data/point-range";
 
-class World {
+export interface World {
   bounds: PointRange;
-  entities: Entity[];
-
-  constructor(bounds: PointRange) {
-    this.bounds = bounds;
-    this.entities = [];
-  }
-
-  forEachEntity(callback: (entity: Entity) => void) {
-    this.entities.forEach(callback);
-  }
-
-  inBounds(position: Point): boolean {
-    if (position.x < this.bounds.x.min) return false;
-    if (position.x > this.bounds.x.max) return false;
-    if (position.y < this.bounds.y.min) return false;
-    if (position.y > this.bounds.y.max) return false;
-    return true;
-  }
-
-  search(position: Point, distance: number): Entity[] {
-    // Search tree for entities within a distance from a given point
-    return [];
-  }
-
-  addEntity(entity: Entity) {
-    this.entities.push(entity);
-  }
+  ants: Ant[];
 }
 
-export default World;
+export const inWorldBounds = (position: Point, world: World): boolean => {
+  if (position.x < world.bounds.x.min) return false;
+  if (position.x > world.bounds.x.max) return false;
+  if (position.y < world.bounds.y.min) return false;
+  if (position.y > world.bounds.y.max) return false;
+  return true;
+};
+
+export const search = (world: World, position: Point, distance: number): Ant[] => {
+  // Search tree for ants within a distance from a given point
+  return [];
+};

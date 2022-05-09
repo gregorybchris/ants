@@ -1,7 +1,7 @@
 import "./SimGraphics.sass";
 import "@fontsource/poppins";
 
-import { Color, colorToHex } from "../../lib/graphics/color";
+import { Color, colorToHex, hexToRGB, rgbToString } from "../../lib/graphics/color";
 import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
@@ -92,23 +92,23 @@ export default function SimGraphics(props: SimGraphicsProps) {
 
   const renderPheromones = (context: CanvasRenderingContext2D) => {
     const radius = 3;
-    const alphaPheromoneColor = Color.BLUE;
-    const betaPheromoneColor = Color.GREEN;
-    const gammaPheromoneColor = Color.PURPLE;
-    const deltaPheromoneColor = Color.YELLOW;
     props.world.pheromones.forEach((pheromone: Pheromone) => {
       context.beginPath();
       const position = scaleToCanvas(pheromone.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
+      let color = Color.BLUE;
       if (pheromone.type == PheromoneType.ALPHA) {
-        context.fillStyle = colorToHex(alphaPheromoneColor);
+        color = Color.BLUE;
       } else if (pheromone.type == PheromoneType.BETA) {
-        context.fillStyle = colorToHex(betaPheromoneColor);
+        color = Color.GREEN;
       } else if (pheromone.type == PheromoneType.GAMMA) {
-        context.fillStyle = colorToHex(gammaPheromoneColor);
+        color = Color.PURPLE;
       } else if (pheromone.type == PheromoneType.DELTA) {
-        context.fillStyle = colorToHex(deltaPheromoneColor);
+        color = Color.YELLOW;
       }
+      const rgbColor = hexToRGB(colorToHex(color));
+      const rgbColorString = rgbToString({ ...rgbColor, alpha: pheromone.strength });
+      context.fillStyle = rgbColorString;
       context.fill();
     });
   };

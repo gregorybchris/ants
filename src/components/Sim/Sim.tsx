@@ -44,7 +44,7 @@ export default function Sim() {
     return {
       ...world,
       ants: world.ants.map(updateAnt),
-      pheromones: [...world.pheromones, ...dropPheromones(world.ants)],
+      pheromones: updatePheromones([...world.pheromones, ...dropPheromones(world.ants)]),
     };
   };
 
@@ -52,11 +52,26 @@ export default function Sim() {
     const pheromones: Pheromone[] = [];
     ants.forEach((ant: Ant) => {
       const position = ant.position;
-      if (random.dice(1000)) pheromones.push({ position, type: PheromoneType.ALPHA });
-      if (random.dice(10000)) pheromones.push({ position, type: PheromoneType.BETA });
-      if (random.dice(100000)) pheromones.push({ position, type: PheromoneType.GAMMA });
+      const strength = 1;
+      if (random.dice(1000)) pheromones.push({ strength, position, type: PheromoneType.ALPHA });
+      if (random.dice(10000)) pheromones.push({ strength, position, type: PheromoneType.BETA });
+      if (random.dice(100000)) pheromones.push({ strength, position, type: PheromoneType.GAMMA });
     });
     return pheromones;
+  };
+
+  const updatePheromones = (pheromones: Pheromone[]): Pheromone[] => {
+    const minStrength = 0.01;
+    const deltaStrength = 0.001;
+    const newPheromones: Pheromone[] = [];
+    pheromones.forEach((pheromone: Pheromone) => {
+      if (pheromone.strength < minStrength) return;
+      newPheromones.push({
+        ...pheromone,
+        strength: pheromone.strength - deltaStrength,
+      });
+    });
+    return newPheromones;
   };
 
   const updateAnt = (ant: Ant): Ant => {

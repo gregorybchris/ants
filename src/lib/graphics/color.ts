@@ -1,3 +1,5 @@
+import convert from "hex-rgb";
+
 // Based on chrome's tab group colors
 export enum Color {
   BLUE = "blue",
@@ -11,7 +13,7 @@ export enum Color {
   YELLOW = "yellow",
 }
 
-export function colorToHex(color: Color) {
+export const colorToHex = (color: Color) => {
   switch (color) {
     case Color.BLUE:
       return "#3498db";
@@ -34,4 +36,12 @@ export function colorToHex(color: Color) {
     default:
       return "#ffffff";
   }
-}
+};
+
+export const hexToRGB = (hexColor: string) => {
+  return convert(hexColor);
+};
+
+export const rgbToString = (rgb: { red: number; green: number; blue: number; alpha: number }) => {
+  return `rgb(${rgb.red}, ${rgb.green}, ${rgb.blue}, ${rgb.alpha})`;
+};

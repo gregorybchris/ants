@@ -9,6 +9,8 @@ import Box from "../../lib/data/box";
 import Nutrient from "../../lib/sim/nutrient";
 import Point from "../../lib/data/point";
 import PointRange from "../../lib/data/point-range";
+import Transmitter from "../../lib/sim/transmitter";
+import { TransmitterType } from "../../lib/sim/transmitter-type";
 import { World } from "../../lib/sim/world";
 import { useAnimationFrame } from "./animation";
 
@@ -70,10 +72,14 @@ export default function SimGraphics(props: SimGraphicsProps) {
   };
 
   const renderScene = (context: CanvasRenderingContext2D) => {
-    const radius = 5;
-
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
+    renderNutrients(context);
+    renderTransmitters(context);
+    renderAnts(context);
+  };
 
+  const renderNutrients = (context: CanvasRenderingContext2D) => {
+    const radius = 3;
     const nutrientColor = Color.WHITE;
     props.world.nutrients.forEach((nutrient: Nutrient) => {
       context.beginPath();
@@ -82,7 +88,33 @@ export default function SimGraphics(props: SimGraphicsProps) {
       context.fillStyle = colorToHex(nutrientColor);
       context.fill();
     });
+  };
 
+  const renderTransmitters = (context: CanvasRenderingContext2D) => {
+    const radius = 3;
+    const alphaTransmitterColor = Color.BLUE;
+    const betaTransmitterColor = Color.GREEN;
+    const gammaTransmitterColor = Color.PURPLE;
+    const deltaTransmitterColor = Color.YELLOW;
+    props.world.transmitters.forEach((transmitter: Transmitter) => {
+      context.beginPath();
+      const position = scaleToCanvas(transmitter.position);
+      context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
+      if (transmitter.transmitterType == TransmitterType.ALPHA) {
+        context.fillStyle = colorToHex(alphaTransmitterColor);
+      } else if (transmitter.transmitterType == TransmitterType.BETA) {
+        context.fillStyle = colorToHex(betaTransmitterColor);
+      } else if (transmitter.transmitterType == TransmitterType.GAMMA) {
+        context.fillStyle = colorToHex(gammaTransmitterColor);
+      } else if (transmitter.transmitterType == TransmitterType.DELTA) {
+        context.fillStyle = colorToHex(deltaTransmitterColor);
+      }
+      context.fill();
+    });
+  };
+
+  const renderAnts = (context: CanvasRenderingContext2D) => {
+    const radius = 5;
     const antColor = Color.RED;
     props.world.ants.forEach((ant: Ant) => {
       context.beginPath();

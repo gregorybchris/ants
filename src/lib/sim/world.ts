@@ -2,11 +2,13 @@ import Ant from "./ant";
 import Nutrient from "./nutrient";
 import Point from "../data/point";
 import PointRange from "../data/point-range";
+import Transmitter from "./transmitter";
 
 export interface World {
   bounds: PointRange;
   ants: Ant[];
   nutrients: Nutrient[];
+  transmitters: Transmitter[];
 }
 
 export const inWorldBounds = (position: Point, world: World): boolean => {

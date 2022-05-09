@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
 import Box from "../../lib/data/box";
+import Nutrient from "../../lib/sim/nutrient";
 import Point from "../../lib/data/point";
 import PointRange from "../../lib/data/point-range";
 import { World } from "../../lib/sim/world";
@@ -70,14 +71,24 @@ export default function SimGraphics(props: SimGraphicsProps) {
 
   const renderScene = (context: CanvasRenderingContext2D) => {
     const radius = 5;
-    const color = Color.RED;
 
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
+
+    const nutrientColor = Color.WHITE;
+    props.world.nutrients.forEach((nutrient: Nutrient) => {
+      context.beginPath();
+      const position = scaleToCanvas(nutrient.position);
+      context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
+      context.fillStyle = colorToHex(nutrientColor);
+      context.fill();
+    });
+
+    const antColor = Color.RED;
     props.world.ants.forEach((ant: Ant) => {
       context.beginPath();
       const position = scaleToCanvas(ant.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
-      context.fillStyle = colorToHex(color);
+      context.fillStyle = colorToHex(antColor);
       context.fill();
     });
   };

@@ -7,6 +7,7 @@ export enum Color {
   PINK = "pink",
   PURPLE = "purple",
   RED = "red",
+  WHITE = "white",
   YELLOW = "yellow",
 }
 
@@ -28,6 +29,8 @@ export function colorToHex(color: Color) {
       return "#e74c3c";
     case Color.YELLOW:
       return "#f1c40f";
+    case Color.WHITE:
+      return "#f0f0f0";
     default:
       return "#ffffff";
   }

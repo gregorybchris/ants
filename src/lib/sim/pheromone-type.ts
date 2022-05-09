@@ -1,4 +1,4 @@
-export enum TransmitterType {
+export enum PheromoneType {
   ALPHA = "alpha",
   BETA = "beta",
   GAMMA = "gamma",

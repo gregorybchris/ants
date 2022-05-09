@@ -9,7 +9,7 @@ export const emptyWorld = (bounds: PointRange) => {
     bounds,
     ants: [],
     nutrients: [],
-    transmitters: [],
+    pheromones: [],
   };
 };
 

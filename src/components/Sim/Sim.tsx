@@ -6,11 +6,11 @@ import { emptyWorld, generateWorld } from "../../lib/sim/generator";
 import { useEffect, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
+import Pheromone from "../../lib/sim/pheromone";
+import { PheromoneType } from "../../lib/sim/pheromone-type";
 import PointRange from "../../lib/data/point-range";
 import Random from "../../lib/math/random";
 import SimGraphics from "../SimGraphics/SimGraphics";
-import Transmitter from "../../lib/sim/transmitter";
-import { TransmitterType } from "../../lib/sim/transmitter-type";
 import { World } from "../../lib/sim/world";
 import { clipPoint } from "../../lib/math/point-math";
 import { clipScaler } from "../../lib/math/vector-math";
@@ -44,19 +44,19 @@ export default function Sim() {
     return {
       ...world,
       ants: world.ants.map(updateAnt),
-      transmitters: [...world.transmitters, ...dropTransmitters(world.ants)],
+      pheromones: [...world.pheromones, ...dropPheromones(world.ants)],
     };
   };
 
-  const dropTransmitters = (ants: Ant[]): Transmitter[] => {
-    const transmitters: Transmitter[] = [];
+  const dropPheromones = (ants: Ant[]): Pheromone[] => {
+    const pheromones: Pheromone[] = [];
     ants.forEach((ant: Ant) => {
       const position = ant.position;
-      if (random.dice(1000)) transmitters.push({ position, transmitterType: TransmitterType.ALPHA });
-      if (random.dice(10000)) transmitters.push({ position, transmitterType: TransmitterType.BETA });
-      if (random.dice(100000)) transmitters.push({ position, transmitterType: TransmitterType.GAMMA });
+      if (random.dice(1000)) pheromones.push({ position, type: PheromoneType.ALPHA });
+      if (random.dice(10000)) pheromones.push({ position, type: PheromoneType.BETA });
+      if (random.dice(100000)) pheromones.push({ position, type: PheromoneType.GAMMA });
     });
-    return transmitters;
+    return pheromones;
   };
 
   const updateAnt = (ant: Ant): Ant => {

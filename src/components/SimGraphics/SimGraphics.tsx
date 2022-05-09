@@ -7,10 +7,10 @@ import { useEffect, useRef, useState } from "react";
 import Ant from "../../lib/sim/ant";
 import Box from "../../lib/data/box";
 import Nutrient from "../../lib/sim/nutrient";
+import Pheromone from "../../lib/sim/pheromone";
+import { PheromoneType } from "../../lib/sim/pheromone-type";
 import Point from "../../lib/data/point";
 import PointRange from "../../lib/data/point-range";
-import Transmitter from "../../lib/sim/transmitter";
-import { TransmitterType } from "../../lib/sim/transmitter-type";
 import { World } from "../../lib/sim/world";
 import { useAnimationFrame } from "./animation";
 
@@ -74,7 +74,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
   const renderScene = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
     renderNutrients(context);
-    renderTransmitters(context);
+    renderPheromones(context);
     renderAnts(context);
   };
 
@@ -90,24 +90,24 @@ export default function SimGraphics(props: SimGraphicsProps) {
     });
   };
 
-  const renderTransmitters = (context: CanvasRenderingContext2D) => {
+  const renderPheromones = (context: CanvasRenderingContext2D) => {
     const radius = 3;
-    const alphaTransmitterColor = Color.BLUE;
-    const betaTransmitterColor = Color.GREEN;
-    const gammaTransmitterColor = Color.PURPLE;
-    const deltaTransmitterColor = Color.YELLOW;
-    props.world.transmitters.forEach((transmitter: Transmitter) => {
+    const alphaPheromoneColor = Color.BLUE;
+    const betaPheromoneColor = Color.GREEN;
+    const gammaPheromoneColor = Color.PURPLE;
+    const deltaPheromoneColor = Color.YELLOW;
+    props.world.pheromones.forEach((pheromone: Pheromone) => {
       context.beginPath();
-      const position = scaleToCanvas(transmitter.position);
+      const position = scaleToCanvas(pheromone.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
-      if (transmitter.transmitterType == TransmitterType.ALPHA) {
-        context.fillStyle = colorToHex(alphaTransmitterColor);
-      } else if (transmitter.transmitterType == TransmitterType.BETA) {
-        context.fillStyle = colorToHex(betaTransmitterColor);
-      } else if (transmitter.transmitterType == TransmitterType.GAMMA) {
-        context.fillStyle = colorToHex(gammaTransmitterColor);
-      } else if (transmitter.transmitterType == TransmitterType.DELTA) {
-        context.fillStyle = colorToHex(deltaTransmitterColor);
+      if (pheromone.type == PheromoneType.ALPHA) {
+        context.fillStyle = colorToHex(alphaPheromoneColor);
+      } else if (pheromone.type == PheromoneType.BETA) {
+        context.fillStyle = colorToHex(betaPheromoneColor);
+      } else if (pheromone.type == PheromoneType.GAMMA) {
+        context.fillStyle = colorToHex(gammaPheromoneColor);
+      } else if (pheromone.type == PheromoneType.DELTA) {
+        context.fillStyle = colorToHex(deltaPheromoneColor);
       }
       context.fill();
     });

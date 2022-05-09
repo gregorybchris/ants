@@ -1,11 +1,11 @@
 import "./SimGraphics.sass";
 import "@fontsource/poppins";
 
-import { Color, colorToHex } from "../../lib/color";
+import { Color, colorToHex } from "../../lib/graphics/color";
 import { useEffect, useRef, useState } from "react";
 
-import Ant from "../../lib/ant";
-import Box from "../../lib/box";
+import Ant from "../../lib/sim/ant";
+import Box from "../../lib/data/box";
 import { useAnimationFrame } from "./animation";
 
 interface SimGraphicsProps {

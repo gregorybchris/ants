@@ -10,14 +10,16 @@ import SimGraphics from "../SimGraphics/SimGraphics";
 import { World } from "../../lib/sim/world";
 import { clipPoint } from "../../lib/math/point-math";
 import { clipScaler } from "../../lib/math/vector-math";
+import { generateWorld } from "../../lib/sim/generator";
 import { randRange } from "../../lib/math/random-math";
 
 export default function Sim() {
   const [ticks, setTicks] = useState(0);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(true);
   const [world, setWorld] = useState<World>({
     bounds: { x: { min: -500, max: 500 }, y: { min: -500, max: 500 } },
     ants: [],
+    nutrients: [],
   });
   const [viewBounds, setViewBounds] = useState<PointRange>({ x: { min: -500, max: 500 }, y: { min: -500, max: 500 } });
 
@@ -31,29 +33,16 @@ export default function Sim() {
   }, []);
 
   useEffect(() => {
-    const numAnts = 100;
-    const ants: Ant[] = [];
-    for (let i = 0; i < numAnts; i++) {
-      const position = {
-        x: (world.bounds.x.min + world.bounds.x.max) / 2,
-        y: (world.bounds.y.min + world.bounds.y.max) / 2,
-      };
-      const ant = {
-        size: 10,
-        position,
-        theta: randRange(0, 2 * Math.PI),
-        speed: randRange(0, 10),
-        omega: 0,
-      };
-      ants.push(ant);
-    }
-    setWorld((prevWorld) => ({ ...prevWorld, ants }));
-    setRunning(true);
+    setWorld(generateWorld);
   }, []);
 
   const update = (deltaTime: number) => {
     setTicks((prevTicks) => prevTicks + 1);
-    setWorld((prevWorld) => ({ ...prevWorld, ants: prevWorld.ants.map(updateAnt) }));
+    setWorld(updateWorld);
+  };
+
+  const updateWorld = (world: World): World => {
+    return { ...world, ants: world.ants.map(updateAnt) };
   };
 
   const updateAnt = (ant: Ant): Ant => {

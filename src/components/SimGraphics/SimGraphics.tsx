@@ -115,7 +115,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
 
   const renderAnts = (context: CanvasRenderingContext2D) => {
     const radius = 5;
-    const antColor = Color.RED;
+    const antColor = Color.BLACK;
     props.world.ants.forEach((ant: Ant) => {
       context.beginPath();
       const position = scaleToCanvas(ant.position);

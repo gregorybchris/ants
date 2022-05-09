@@ -2,6 +2,7 @@ import convert from "hex-rgb";
 
 // Based on chrome's tab group colors
 export enum Color {
+  BLACK = "black",
   BLUE = "blue",
   CYAN = "cyan",
   GREEN = "green",
@@ -15,6 +16,8 @@ export enum Color {
 
 export const colorToHex = (color: Color) => {
   switch (color) {
+    case Color.BLACK:
+      return "#181620";
     case Color.BLUE:
       return "#3498db";
     case Color.CYAN:

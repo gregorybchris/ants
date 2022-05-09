@@ -5,4 +5,5 @@ export default interface Ant extends Entity {
   theta: number;
   speed: number;
   omega: number;
+  carrying: boolean;
 }

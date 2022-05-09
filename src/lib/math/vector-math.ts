@@ -1,3 +1,5 @@
+import Point from "../data/point";
+import PointRange from "../data/point-range";
 import Range from "../data/range";
 import Vector from "../data/vector";
 
@@ -22,4 +24,25 @@ export const scale = (vector: Vector, factor: number) => {
     x: vector.x * factor,
     y: vector.y * factor,
   };
+};
+
+export const clipPoint = (point: Point, pointRange: PointRange): Point => {
+  return {
+    x: clipScaler(point.x, pointRange.x),
+    y: clipScaler(point.y, pointRange.y),
+  };
+};
+
+export const getDist = (pointA: Point, pointB: Point): number => {
+  const dx = pointB.x - pointA.x;
+  const dy = pointB.y - pointA.y;
+  return Math.sqrt(dx * dx + dy * dy);
+};
+
+export const getDirection = (pointA: Point, pointB: Point): number => {
+  return Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x);
+};
+
+export const getTurnSign = (theta: number, direction: number): number => {
+  return -Math.sign(Math.atan2(Math.sin(theta - direction), Math.cos(theta - direction)));
 };

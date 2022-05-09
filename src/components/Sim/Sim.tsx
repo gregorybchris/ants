@@ -2,18 +2,20 @@ import "./Sim.sass";
 import "@fontsource/poppins";
 
 import Keyboard, { KeyName } from "../../lib/io/keyboard";
+import { clipPoint, getDirection, getDist, getTurnSign } from "../../lib/math/vector-math";
 import { emptyWorld, generateWorld } from "../../lib/sim/generator";
 import { useEffect, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
+import Nutrient from "../../lib/sim/nutrient";
 import Pheromone from "../../lib/sim/pheromone";
 import { PheromoneType } from "../../lib/sim/pheromone-type";
 import PointRange from "../../lib/data/point-range";
 import Random from "../../lib/math/random";
 import SimGraphics from "../SimGraphics/SimGraphics";
 import { World } from "../../lib/sim/world";
-import { clipPoint } from "../../lib/math/point-math";
 import { clipScaler } from "../../lib/math/vector-math";
+import { max } from "../../lib/math/math-utils";
 
 export default function Sim() {
   const [ticks, setTicks] = useState(0);
@@ -41,10 +43,29 @@ export default function Sim() {
   };
 
   const updateWorld = (world: World): World => {
+    let ants = world.ants.map((ant: Ant) => moveAnt(ant, world.nutrients, world.bounds));
+    let pheromones = updatePheromones([...world.pheromones, ...dropPheromones(world.ants)]);
+
+    let nutrients = world.nutrients;
+
+    const carryDistance = 5;
+    const nutrientIDsToCarry: string[] = [];
+    nutrients.forEach((nutrient: Nutrient) => {
+      ants.forEach((ant: Ant) => {
+        if (!ant.carrying && getDist(ant.position, nutrient.position) < carryDistance) {
+          ant.carrying = true;
+          nutrientIDsToCarry.push(nutrient.id);
+          return;
+        }
+      });
+    });
+    nutrients = nutrients.filter((nutrient) => !nutrientIDsToCarry.includes(nutrient.id));
+
     return {
       ...world,
-      ants: world.ants.map(updateAnt),
-      pheromones: updatePheromones([...world.pheromones, ...dropPheromones(world.ants)]),
+      ants,
+      pheromones,
+      nutrients,
     };
   };
 
@@ -53,9 +74,12 @@ export default function Sim() {
     ants.forEach((ant: Ant) => {
       const position = ant.position;
       const strength = 1;
-      if (random.dice(1000)) pheromones.push({ strength, position, type: PheromoneType.ALPHA });
-      if (random.dice(10000)) pheromones.push({ strength, position, type: PheromoneType.BETA });
-      if (random.dice(100000)) pheromones.push({ strength, position, type: PheromoneType.GAMMA });
+      const id = crypto.randomUUID();
+      if (!ant.carrying) {
+        if (random.dice(500)) pheromones.push({ id, strength, position, type: PheromoneType.ALPHA });
+      } else {
+        if (random.dice(100)) pheromones.push({ id, strength, position, type: PheromoneType.BETA });
+      }
     });
     return pheromones;
   };
@@ -74,17 +98,33 @@ export default function Sim() {
     return newPheromones;
   };
 
-  const updateAnt = (ant: Ant): Ant => {
+  const moveAnt = (ant: Ant, nutrients: Nutrient[], bounds: PointRange): Ant => {
     const speedRange = { min: 0, max: 1 };
-    const omegaRange = { min: -Math.PI / 8, max: Math.PI / 8 };
-    const dOmegaRange = { min: -Math.PI / 10, max: Math.PI / 10 };
+    const dSpeedRange = { min: -0.1, max: 0.1 };
+    const omegaRange = { min: -Math.PI / 20, max: Math.PI / 20 };
+    const dOmegaRange = { min: -Math.PI / 30, max: Math.PI / 30 };
 
-    const omega = clipScaler(ant.omega + random.next(dOmegaRange.min, dOmegaRange.max), omegaRange);
+    const dOmega = random.next(dOmegaRange.min, dOmegaRange.max);
+    let omega = clipScaler(ant.omega + dOmega, omegaRange);
     const theta = ant.theta + omega;
-    const speed = clipScaler(ant.speed + random.next(-0.1, 0.1), speedRange);
+
+    const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
+    let speed = clipScaler(ant.speed + dSpeed, speedRange);
     const vx = Math.cos(theta) * speed;
     const vy = Math.sin(theta) * speed;
-    const position = clipPoint({ x: ant.position.x + vx, y: ant.position.y + vy }, world.bounds);
+    const position = clipPoint({ x: ant.position.x + vx, y: ant.position.y + vy }, bounds);
+
+    if (!ant.carrying && nutrients.length > 0) {
+      const antSightDist = 70;
+      const closestNutrient = max(nutrients, (a, b) => getDist(b.position, position) - getDist(a.position, position));
+      if (closestNutrient && getDist(closestNutrient.position, position) < antSightDist) {
+        const direction = getDirection(position, closestNutrient.position);
+        const turnSign = getTurnSign(theta, direction);
+        omega = turnSign * dOmegaRange.max;
+        speed = speedRange.max;
+      }
+    }
+
     return { ...ant, omega, theta, speed, position };
   };
 

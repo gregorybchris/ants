@@ -21,19 +21,22 @@ export const generateWorld = (world: World): World => {
   for (let i = 0; i < numAnts; i++) {
     const position = { x: 0, y: 0 };
     ants.push({
+      id: crypto.randomUUID(),
       size: 10,
       position,
       theta: random.next(0, 2 * Math.PI),
       speed: random.next(0, 10),
       omega: 0,
+      carrying: false,
     });
   }
 
-  const numNutrients = 10;
+  const numNutrients = 30;
   const nutrients: Nutrient[] = [];
   for (let i = 0; i < numNutrients; i++) {
-    const position = { x: 100 + random.next(0, 20), y: random.next(0, 20) };
+    const position = { x: 100 + random.next(0, 20), y: 50 + random.next(0, 20) };
     nutrients.push({
+      id: crypto.randomUUID(),
       position,
     });
   }

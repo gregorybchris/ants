@@ -73,8 +73,8 @@ export default function SimGraphics(props: SimGraphicsProps) {
 
   const renderScene = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
-    renderNutrients(context);
     renderPheromones(context);
+    renderNutrients(context);
     renderAnts(context);
   };
 
@@ -114,14 +114,24 @@ export default function SimGraphics(props: SimGraphicsProps) {
   };
 
   const renderAnts = (context: CanvasRenderingContext2D) => {
-    const radius = 5;
+    const antRadius = 5;
+    const nutrientRadius = 2;
     const antColor = Color.BLACK;
+    const nutrientColor = Color.WHITE;
+
     props.world.ants.forEach((ant: Ant) => {
-      context.beginPath();
       const position = scaleToCanvas(ant.position);
-      context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
+      context.beginPath();
+      context.arc(position.x, position.y, antRadius, 0, 2 * Math.PI);
       context.fillStyle = colorToHex(antColor);
       context.fill();
+
+      if (ant.carrying) {
+        context.beginPath();
+        context.arc(position.x, position.y, nutrientRadius, 0, 2 * Math.PI);
+        context.fillStyle = colorToHex(nutrientColor);
+        context.fill();
+      }
     });
   };
 

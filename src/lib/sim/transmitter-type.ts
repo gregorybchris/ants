@@ -1,4 +1,4 @@
-export enum Message {
+export enum TransmitterType {
   ALPHA = "alpha",
   BETA = "beta",
   GAMMA = "gamma",

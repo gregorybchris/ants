@@ -15,10 +15,7 @@ export default class Keyboard {
   private keyMap: Map<KeyName, boolean> = new Map();
   public static Keys = KeyName;
 
-  constructor(
-    onKeyPress: ((keyName: KeyName) => void) | undefined = undefined,
-    onKeyRelease: ((keyName: KeyName) => void) | undefined = undefined
-  ) {
+  constructor(onKeyPress?: (keyName: KeyName) => void, onKeyRelease?: (keyName: KeyName) => void) {
     window.onkeydown = (keyEvent: KeyboardEvent) => {
       const keyString = keyEvent.key;
       if (Object.values(KeyName).includes(keyString as KeyName)) {

@@ -1,7 +1,8 @@
-import Point from "../data/point";
-import Vector from "../data/vector";
+import Entity from "./entity";
 
-export default interface Ant {
-  position: Point;
-  velocity: Vector;
+export default interface Ant extends Entity {
+  size: number;
+  theta: number;
+  speed: number;
+  omega: number;
 }

@@ -1,17 +1,22 @@
+import "./Sim.sass";
 import "@fontsource/poppins";
 
 import Keyboard, { KeyName } from "../../lib/io/keyboard";
 import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
-import Box from "../../lib/data/box";
+import PointRange from "../../lib/data/point-range";
 import SimGraphics from "../SimGraphics/SimGraphics";
+import { clipPoint } from "../../lib/math/point-math";
+import { clipScaler } from "../../lib/math/vector-math";
+import { randRange } from "../../lib/math/random-math";
 
 export default function Sim() {
   const [ticks, setTicks] = useState(0);
   const [running, setRunning] = useState(true);
   const [ants, setAnts] = useState<Ant[]>([]);
-  const boundsRef = useRef<Box>({ width: 1000, height: 1000 });
+  const worldBounds: PointRange = { x: { min: -500, max: 500 }, y: { min: -500, max: 500 } };
+  const [viewBounds, setViewBounds] = useState<PointRange>({ x: { min: -500, max: 500 }, y: { min: -500, max: 500 } });
 
   useEffect(() => {
     const onKeyPress = (keyName: KeyName) => {
@@ -22,8 +27,8 @@ export default function Sim() {
       if (keyName == Keyboard.Keys.SPACE) {
         setAnts((prevAnts: Ant[]) => {
           return prevAnts.map((prevAnt: Ant) => {
-            const newPosition = { x: prevAnt.position.x, y: prevAnt.position.y + 20 };
-            return { ...prevAnt, position: newPosition };
+            const position = { ...prevAnt.position, y: prevAnt.position.y + 20 };
+            return { ...prevAnt, position };
           });
         });
       }
@@ -32,14 +37,19 @@ export default function Sim() {
   }, []);
 
   useEffect(() => {
-    const numAnts = 10;
+    const numAnts = 100;
     const newAnts = [];
     for (let i = 0; i < numAnts; i++) {
-      const position = { x: 0, y: 20 };
-      const velocity = { x: 1, y: 0 };
+      const position = {
+        x: (worldBounds.x.min + worldBounds.x.max) / 2,
+        y: (worldBounds.y.min + worldBounds.y.max) / 2,
+      };
       const newAnt = {
-        position: position,
-        velocity: velocity,
+        size: 10,
+        position,
+        theta: randRange(0, 2 * Math.PI),
+        speed: randRange(0, 1),
+        omega: 0,
       };
       newAnts.push(newAnt);
     }
@@ -48,19 +58,27 @@ export default function Sim() {
 
   const update = (deltaTime: number) => {
     setTicks((prevTicks) => prevTicks + 1);
-    setAnts((prevAnts: Ant[]) => {
-      return prevAnts.map((ant: Ant) => {
-        const p = ant.position;
-        const v = ant.velocity;
-        const newPosition = { x: p.x + v.x, y: p.y + v.y };
-        return { ...ant, position: newPosition };
-      });
-    });
+    setAnts((prevAnts: Ant[]) => prevAnts.map(updateAnt));
+  };
+
+  const updateAnt = (ant: Ant): Ant => {
+    const speedRange = { min: 0, max: 5 };
+    const omegaRange = { min: -Math.PI / 8, max: Math.PI / 8 };
+    const dOmegaRange = { min: -Math.PI / 10, max: Math.PI / 10 };
+
+    const p = ant.position;
+    const omega = clipScaler(ant.omega + randRange(dOmegaRange.min, dOmegaRange.max), omegaRange);
+    const theta = ant.theta + omega;
+    const speed = clipScaler(ant.speed + omega, speedRange);
+    const vx = Math.cos(theta) * speed;
+    const vy = Math.sin(theta) * speed;
+    const position = clipPoint({ x: p.x + vx, y: p.y + vy }, worldBounds);
+    return { ...ant, position, theta, speed };
   };
 
   return (
     <div className="Sim">
-      <SimGraphics onUpdate={update} running={running} ants={ants} />
+      <SimGraphics onUpdate={update} bounds={viewBounds} running={running} ants={ants} />
     </div>
   );
 }

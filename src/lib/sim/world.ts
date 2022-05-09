@@ -1,18 +1,18 @@
-import Ant from "./ant";
-import Point from "./point";
-import PointRange from "./point-range";
+import Entity from "./entity";
+import Point from "../data/point";
+import PointRange from "../data/point-range";
 
 class World {
   bounds: PointRange;
-  ants: Ant[];
+  entities: Entity[];
 
   constructor(bounds: PointRange) {
     this.bounds = bounds;
-    this.ants = [];
+    this.entities = [];
   }
 
-  forEachAnt(callback: (ant: Ant) => void) {
-    this.ants.forEach(callback);
+  forEachEntity(callback: (entity: Entity) => void) {
+    this.entities.forEach(callback);
   }
 
   inBounds(position: Point): boolean {
@@ -23,13 +23,13 @@ class World {
     return true;
   }
 
-  search(position: Point, distance: number): Ant[] {
-    // Search tree for ants within a distance from a given point
+  search(position: Point, distance: number): Entity[] {
+    // Search tree for entities within a distance from a given point
     return [];
   }
 
-  addAnt(ant: Ant) {
-    this.ants.push(ant);
+  addEntity(entity: Entity) {
+    this.entities.push(entity);
   }
 }
 

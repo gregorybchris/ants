@@ -6,12 +6,15 @@ import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
 import Box from "../../lib/data/box";
+import Point from "../../lib/data/point";
+import PointRange from "../../lib/data/point-range";
 import { useAnimationFrame } from "./animation";
 
 interface SimGraphicsProps {
   running: boolean;
   onUpdate: (deltaTime: number) => void;
   ants: Ant[];
+  bounds: PointRange;
 }
 
 export default function SimGraphics(props: SimGraphicsProps) {
@@ -21,35 +24,58 @@ export default function SimGraphics(props: SimGraphicsProps) {
   useAnimationFrame(props.onUpdate, props.running);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      setCanvasSize({ width: canvas.width, height: canvas.height });
-    }
+    resetCanvasSize();
   }, []);
+
+  useEffect(() => {
+    window.addEventListener("resize", resetCanvasSize);
+    return () => window.removeEventListener("resize", resetCanvasSize);
+  }, []);
+
+  useEffect(() => {
+    resizeCanvas();
+  }, [canvasSize]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
-
-    if (canvas) {
-      const ratio = 5;
-      canvas.width = canvasSize.width * ratio;
-      canvas.height = canvasSize.height * ratio;
-    }
 
     if (canvas && context) {
       renderScene(context);
     }
   }, [props.ants]);
 
+  const resetCanvasSize = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setCanvasSize({ width: canvas.getBoundingClientRect().width, height: canvas.getBoundingClientRect().height });
+    }
+  };
+
+  const resizeCanvas = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = canvasSize.width;
+      canvas.height = canvasSize.height;
+    }
+  };
+
+  const scaleToCanvas = (point: Point): Point => {
+    const b = props.bounds;
+    const x = ((point.x - b.x.min) / (b.x.max - b.x.min)) * canvasSize.width;
+    const y = ((point.y - b.x.min) / (b.y.max - b.y.min)) * canvasSize.height;
+    return { x, y };
+  };
+
   const renderScene = (context: CanvasRenderingContext2D) => {
-    const radius = 10;
+    const radius = 5;
     const color = Color.RED;
 
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
     props.ants.forEach((ant: Ant) => {
       context.beginPath();
-      context.arc(ant.position.x, ant.position.y, radius, 0, 2 * Math.PI);
+      const position = scaleToCanvas(ant.position);
+      context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
       context.fillStyle = colorToHex(color);
       context.fill();
     });

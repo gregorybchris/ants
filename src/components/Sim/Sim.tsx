@@ -11,6 +11,7 @@ import Nest from "../../lib/sim/nest";
 import Nutrient from "../../lib/sim/nutrient";
 import Pheromone from "../../lib/sim/pheromone";
 import { PheromoneType } from "../../lib/sim/pheromone-type";
+import Point from "../../lib/data/point";
 import PointRange from "../../lib/data/point-range";
 import Random from "../../lib/math/random";
 import SimGraphics from "../SimGraphics/SimGraphics";
@@ -142,93 +143,95 @@ export default function Sim() {
     const speedRange = { min: 1, max: 2 };
     const dSpeedRange = { min: -0.1, max: 0.1 };
     const omegaRange = { min: -Math.PI / 4, max: Math.PI / 4 };
-    const dOmegaRange = { min: -Math.PI / 30, max: Math.PI / 30 };
+    const dOmegaRandom = Math.PI / 30;
 
     // Add randomness for wandering
-    const dOmega = random.next(dOmegaRange.min, dOmegaRange.max);
+    const dOmega = random.next(-dOmegaRandom, dOmegaRandom);
     let omega = clipScaler(ant.omega + dOmega, omegaRange);
     let theta = ant.theta + omega;
 
     const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
-    let speed = clipScaler(ant.speed + dSpeed, speedRange);
+    let speed = ant.speed;
+    speed = clipScaler(ant.speed + dSpeed, speedRange);
     const vx = Math.cos(theta) * speed;
     const vy = Math.sin(theta) * speed;
     const position = clipPoint({ x: ant.position.x + vx, y: ant.position.y + vy }, bounds);
 
-    const antSightDist = 200;
-    const antSightAngle = Math.PI;
+    omega = getAntTurning(ant, nutrients, nests, pheromones);
 
+    return { ...ant, omega, speed, theta, position };
+  };
+
+  const getAntTurning = (ant: Ant, nutrients: Nutrient[], nests: Nest[], pheromones: Pheromone[]) => {
+    // TODO: Refactor omegaRange out of here
+    const omegaRange = { min: -Math.PI / 4, max: Math.PI / 4 };
+    let omega = ant.omega;
     if (ant.carrying) {
       // Carrying a nutrient, try to get it back to nest
-      const closestNest = max(nests, (a, b) => getDist(b.position, position) - getDist(a.position, position));
-      if (getDist(position, closestNest.position) < antSightDist) {
+      const compare = (a: Nest, b: Nest) => getDist(b.position, ant.position) - getDist(a.position, ant.position);
+      const closestNest = max(nests, compare);
+      if (getDist(ant.position, closestNest.position) < ant.sightDistance) {
         // Head toward nearest nest to drop off nutrients
-        const direction = getDirection(position, closestNest.position);
-        const turnSign = getTurnSign(theta, direction);
+        const direction = getDirection(ant.position, closestNest.position);
+        const turnSign = getTurnSign(ant.theta, direction);
         omega = turnSign * omegaRange.max;
-        speed = speedRange.max;
+        // speed = speedRange.max;
       } else {
         // Head toward alpha pheromones that indicate a nest might be close
-        let leftCount = 0;
-        let rightCount = 0;
-        pheromones.forEach((pheromone: Pheromone) => {
-          if (pheromone.type != PheromoneType.ALPHA) return;
-          if (getDist(position, pheromone.position) < antSightDist) {
-            const angle = getDirection(position, pheromone.position);
-            if (angle > 0 && angle < antSightAngle) rightCount++;
-            if (angle < 0 && angle > -antSightAngle) leftCount++;
-          }
-        });
-
-        let turnSign = rightCount == leftCount ? 0 : rightCount > leftCount ? 1 : -1;
-        const ratio = rightCount / (rightCount + leftCount);
-        if (ratio > 0.45 || ratio < 0.55) turnSign = 0;
+        const turnSign = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.ALPHA);
         omega = turnSign * omegaRange.max;
-        speed = speedRange.max;
+        // speed = speedRange.max;
       }
     } else {
       // Not carrying a nutrient, try to find one to bring back to nest
       let closestNutrient = undefined;
       if (nutrients.length > 0) {
-        closestNutrient = max(nutrients, (a, b) => getDist(b.position, position) - getDist(a.position, position));
-        if (getDist(position, closestNutrient.position) > antSightDist) {
+        const compare = (a: Nutrient, b: Nutrient) =>
+          getDist(b.position, ant.position) - getDist(a.position, ant.position);
+        closestNutrient = max(nutrients, compare);
+        if (getDist(ant.position, closestNutrient.position) > ant.sightDistance) {
           closestNutrient = undefined;
         }
       }
 
-      if (closestNutrient) {
+      if (closestNutrient !== undefined) {
         // Head toward nutrients to pick them up
-        const direction = getDirection(position, closestNutrient.position);
-        const turnSign = getTurnSign(theta, direction);
+        const direction = getDirection(ant.position, closestNutrient.position);
+        const turnSign = getTurnSign(ant.theta, direction);
         omega = turnSign * omegaRange.max;
-        speed = speedRange.max;
+        // speed = speedRange.max;
       } else {
         // Head toward beta pheromones that indicate nutrients might be close
-        let leftCount = 0;
-        let rightCount = 0;
-        pheromones.forEach((pheromone: Pheromone) => {
-          if (pheromone.type != PheromoneType.BETA) return;
-          if (getDist(position, pheromone.position) < antSightDist) {
-            const angle = getDirection(position, pheromone.position);
-            if (angle > 0 && angle < antSightAngle) {
-              rightCount++;
-            } else if (angle < 0 && angle > -antSightAngle) {
-              leftCount++;
-            }
-          }
-        });
-
-        let turnSign = rightCount == leftCount ? 0 : rightCount > leftCount ? 1 : -1;
-        const ratio = rightCount / (rightCount + leftCount);
-        if (ratio > 0.45 || ratio < 0.55) {
-          turnSign = 0;
-        }
+        const turnSign = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.BETA);
         omega = turnSign * omegaRange.max;
-        speed = speedRange.max;
+        // speed = speedRange.max;
       }
     }
 
-    return { ...ant, omega, theta, speed, position };
+    return omega;
+  };
+
+  const turnTowardPheromones = (
+    ant: Ant,
+    pheromones: Pheromone[],
+    position: Point,
+    pheromoneType: PheromoneType
+  ): number => {
+    let leftCount = 0;
+    let rightCount = 0;
+    pheromones.forEach((pheromone: Pheromone) => {
+      if (pheromone.type != pheromoneType) return;
+      if (getDist(position, pheromone.position) < ant.sightDistance) {
+        const angle = getDirection(position, pheromone.position);
+        if (angle > 0 && angle < ant.sightAngle) rightCount++;
+        if (angle < 0 && angle > -ant.sightAngle) leftCount++;
+      }
+    });
+
+    let turnSign = rightCount == leftCount ? 0 : rightCount > leftCount ? 1 : -1;
+    const ratio = rightCount / (rightCount + leftCount);
+    if (ratio > 0.45 || ratio < 0.55) turnSign = 0;
+    return turnSign;
   };
 
   return (

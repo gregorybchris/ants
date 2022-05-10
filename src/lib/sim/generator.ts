@@ -33,15 +33,19 @@ export const generateWorld = (world: World): World => {
     };
     nests.push(nest);
 
+    const sightAngle = Math.PI;
+    const sightDistance = 200;
     for (let j = 0; j < numAntsPerNest; j++) {
       ants.push({
         id: crypto.randomUUID(),
         size: 10,
         position,
         theta: random.next(0, 2 * Math.PI),
-        speed: random.next(0, 10),
+        speed: 0,
         omega: 0,
         carrying: false,
+        sightAngle,
+        sightDistance,
       });
     }
   }

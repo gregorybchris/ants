@@ -6,4 +6,6 @@ export default interface Ant extends Entity {
   speed: number;
   omega: number;
   carrying: boolean;
+  sightAngle: number;
+  sightDistance: number;
 }

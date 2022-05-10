@@ -16,10 +16,11 @@ export const emptyWorld = (bounds: PointRange) => {
 };
 
 export const generateWorld = (world: World): World => {
-  const random = new Random(0);
+  const random = new Random(5);
 
   // Generate ants
-  const numNests = 3;
+  const numNests = 1;
+  const numAntsPerNest = 150;
   const nests: Nest[] = [];
   const ants: Ant[] = [];
   for (let i = 0; i < numNests; i++) {
@@ -32,12 +33,11 @@ export const generateWorld = (world: World): World => {
     };
     nests.push(nest);
 
-    const numAntsPerNest = 50;
-    for (let i = 0; i < numAntsPerNest; i++) {
+    for (let j = 0; j < numAntsPerNest; j++) {
       ants.push({
         id: crypto.randomUUID(),
         size: 10,
-        position: nest.position,
+        position,
         theta: random.next(0, 2 * Math.PI),
         speed: random.next(0, 10),
         omega: 0,
@@ -47,16 +47,19 @@ export const generateWorld = (world: World): World => {
   }
 
   // Generate nutrients
-  const numNutrientClusters = 3;
-  const numNutrientsPerCluster = 30;
+  const numNutrientClusters = 2;
+  const numNutrientsPerCluster = 300;
+  const clusterRadius = 50;
   const nutrients: Nutrient[] = [];
   for (let i = 0; i < numNutrientClusters; i++) {
     const clusterX = random.next(world.bounds.x.min, world.bounds.x.max);
     const clusterY = random.next(world.bounds.y.min, world.bounds.y.max);
     const clusterPosition = { x: clusterX, y: clusterY };
     for (let j = 0; j < numNutrientsPerCluster; j++) {
-      const x = clusterPosition.x + random.next(-15, 15);
-      const y = clusterPosition.y + random.next(-15, 15);
+      const angle = random.next(0, Math.PI * 2);
+      const radius = random.next(0, clusterRadius);
+      const x = clusterPosition.x + Math.cos(angle) * radius;
+      const y = clusterPosition.y + Math.sin(angle) * radius;
       const position = { x, y };
       nutrients.push({
         id: crypto.randomUUID(),

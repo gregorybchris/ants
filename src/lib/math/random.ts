@@ -8,7 +8,7 @@ class Random {
   implementation: LCGImplementation;
   params: LCGParameters;
 
-  constructor(seed: number, implementation = LCGImplementation.JAVA) {
+  constructor(seed: number, implementation = LCGImplementation.GLIBC) {
     this.seed = seed === undefined ? new Date().getTime() : seed;
     this.savedNormal = null;
     this.implementation = implementation;

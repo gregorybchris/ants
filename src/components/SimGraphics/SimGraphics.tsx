@@ -68,7 +68,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
   const scaleToCanvas = (point: Point): Point => {
     const b = props.bounds;
     const x = ((point.x - b.x.min) / (b.x.max - b.x.min)) * canvasSize.width;
-    const y = ((point.y - b.x.min) / (b.y.max - b.y.min)) * canvasSize.height;
+    const y = canvasSize.height - ((point.y - b.x.min) / (b.y.max - b.y.min)) * canvasSize.height;
     return { x, y };
   };
 
@@ -98,16 +98,13 @@ export default function SimGraphics(props: SimGraphicsProps) {
       context.beginPath();
       const position = scaleToCanvas(pheromone.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
-      let color = Color.BLUE;
-      if (pheromone.type == PheromoneType.ALPHA) {
-        color = Color.BLUE;
-      } else if (pheromone.type == PheromoneType.BETA) {
-        color = Color.GREEN;
-      } else if (pheromone.type == PheromoneType.GAMMA) {
-        color = Color.PURPLE;
-      } else if (pheromone.type == PheromoneType.DELTA) {
-        color = Color.YELLOW;
-      }
+
+      let color = Color.WHITE;
+      if (pheromone.type == PheromoneType.ALPHA) color = Color.BLUE;
+      else if (pheromone.type == PheromoneType.BETA) color = Color.GREEN;
+      else if (pheromone.type == PheromoneType.GAMMA) color = Color.PURPLE;
+      else if (pheromone.type == PheromoneType.DELTA) color = Color.YELLOW;
+
       const rgbColor = hexToRGB(colorToHex(color));
       const rgbColorString = rgbToString({ ...rgbColor, alpha: pheromone.strength });
       context.fillStyle = rgbColorString;

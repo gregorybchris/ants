@@ -87,9 +87,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
       context.beginPath();
       const position = scaleToCanvas(nest.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
-      const rgbColor = hexToRGB(colorToHex(nestColor));
-      const rgbColorString = rgbToString({ ...rgbColor, alpha: 0.8 });
-      context.fillStyle = rgbColorString;
+      context.fillStyle = colorToHex(nestColor);
       context.fill();
     });
   };

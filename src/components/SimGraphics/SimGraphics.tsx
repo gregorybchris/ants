@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
 import Box from "../../lib/data/box";
+import Nest from "../../lib/sim/nest";
 import Nutrient from "../../lib/sim/nutrient";
 import Pheromone from "../../lib/sim/pheromone";
 import { PheromoneType } from "../../lib/sim/pheromone-type";
@@ -73,19 +74,22 @@ export default function SimGraphics(props: SimGraphicsProps) {
 
   const renderScene = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
+    renderNests(context);
     renderPheromones(context);
     renderNutrients(context);
     renderAnts(context);
   };
 
-  const renderNutrients = (context: CanvasRenderingContext2D) => {
-    const radius = 3;
-    const nutrientColor = Color.WHITE;
-    props.world.nutrients.forEach((nutrient: Nutrient) => {
+  const renderNests = (context: CanvasRenderingContext2D) => {
+    const radius = 8;
+    const nestColor = Color.BROWN;
+    props.world.nests.forEach((nest: Nest) => {
       context.beginPath();
-      const position = scaleToCanvas(nutrient.position);
+      const position = scaleToCanvas(nest.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
-      context.fillStyle = colorToHex(nutrientColor);
+      const rgbColor = hexToRGB(colorToHex(nestColor));
+      const rgbColorString = rgbToString({ ...rgbColor, alpha: 0.8 });
+      context.fillStyle = rgbColorString;
       context.fill();
     });
   };
@@ -109,6 +113,18 @@ export default function SimGraphics(props: SimGraphicsProps) {
       const rgbColor = hexToRGB(colorToHex(color));
       const rgbColorString = rgbToString({ ...rgbColor, alpha: pheromone.strength });
       context.fillStyle = rgbColorString;
+      context.fill();
+    });
+  };
+
+  const renderNutrients = (context: CanvasRenderingContext2D) => {
+    const radius = 3;
+    const nutrientColor = Color.WHITE;
+    props.world.nutrients.forEach((nutrient: Nutrient) => {
+      context.beginPath();
+      const position = scaleToCanvas(nutrient.position);
+      context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
+      context.fillStyle = colorToHex(nutrientColor);
       context.fill();
     });
   };

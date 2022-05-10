@@ -4,6 +4,7 @@ import convert from "hex-rgb";
 export enum Color {
   BLACK = "black",
   BLUE = "blue",
+  BROWN = "brown",
   CYAN = "cyan",
   GREEN = "green",
   GREY = "grey",
@@ -20,6 +21,8 @@ export const colorToHex = (color: Color) => {
       return "#181620";
     case Color.BLUE:
       return "#3498db";
+    case Color.BROWN:
+      return "#5d3c25";
     case Color.CYAN:
       return "#00d2d3";
     case Color.GREEN:

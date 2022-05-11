@@ -8,4 +8,5 @@ export default interface Ant extends Entity {
   carrying: boolean;
   sightAngle: number;
   sightDistance: number;
+  senseDistance: number;
 }

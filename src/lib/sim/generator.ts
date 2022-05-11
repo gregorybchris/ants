@@ -20,7 +20,7 @@ export const generateWorld = (world: World): World => {
 
   // Generate ants
   const numNests = 1;
-  const numAntsPerNest = 150;
+  const numAntsPerNest = 40;
   const nests: Nest[] = [];
   const ants: Ant[] = [];
   for (let i = 0; i < numNests; i++) {
@@ -33,22 +33,26 @@ export const generateWorld = (world: World): World => {
     };
     nests.push(nest);
 
-    const sightAngle = Math.PI;
-    const sightDistance = 200;
+    const sightAngle = Math.PI / 4;
+    const sightDistance = 100;
+    const senseDistance = 10;
     for (let j = 0; j < numAntsPerNest; j++) {
       ants.push({
         id: crypto.randomUUID(),
         size: 10,
         position,
         theta: random.next(0, 2 * Math.PI),
-        speed: 0,
+        speed: 2,
         omega: 0,
         carrying: false,
         sightAngle,
         sightDistance,
+        senseDistance,
       });
     }
   }
+
+  ants[13].id = "chosen";
 
   // Generate nutrients
   const numNutrientClusters = 2;

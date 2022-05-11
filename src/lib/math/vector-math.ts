@@ -13,6 +13,17 @@ export const clipScaler = (scaler: number, range: Range) => {
   return Math.max(Math.min(scaler, range.max), range.min);
 };
 
+export const wrapScaler = (scaler: number, range: Range) => {
+  const interval = range.max - range.min;
+  while (scaler < range.min) {
+    scaler += interval;
+  }
+  while (scaler > range.max) {
+    scaler -= interval;
+  }
+  return scaler;
+};
+
 export const clipMagnitude = (vector: Vector, range: Range) => {
   const oldMagnitude = Math.sqrt(vector.x * vector.x + vector.y + vector.y);
   const newMagnitude = clipScaler(oldMagnitude, range);
@@ -33,6 +44,13 @@ export const clipPoint = (point: Point, pointRange: PointRange): Point => {
   };
 };
 
+export const wrapPoint = (point: Point, pointRange: PointRange): Point => {
+  return {
+    x: wrapScaler(point.x, pointRange.x),
+    y: wrapScaler(point.y, pointRange.y),
+  };
+};
+
 export const getDist = (pointA: Point, pointB: Point): number => {
   const dx = pointB.x - pointA.x;
   const dy = pointB.y - pointA.y;
@@ -40,7 +58,7 @@ export const getDist = (pointA: Point, pointB: Point): number => {
 };
 
 export const getDirection = (pointA: Point, pointB: Point): number => {
-  return Math.atan2(pointA.y - pointB.y, pointA.x - pointB.x);
+  return Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x);
 };
 
 export const getTurnSign = (theta: number, direction: number): number => {

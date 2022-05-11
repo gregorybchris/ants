@@ -48,6 +48,11 @@ export const hexToRGB = (hexColor: string) => {
   return convert(hexColor);
 };
 
-export const rgbToString = (rgb: { red: number; green: number; blue: number; alpha: number }) => {
+export const rgbToString = (rgb: { red: number; green: number; blue: number; alpha: number }): string => {
   return `rgb(${rgb.red}, ${rgb.green}, ${rgb.blue}, ${rgb.alpha})`;
+};
+
+export const colorToAlpha = (color: Color, alpha: number): string => {
+  const rgbColor = hexToRGB(colorToHex(color));
+  return rgbToString({ ...rgbColor, alpha });
 };

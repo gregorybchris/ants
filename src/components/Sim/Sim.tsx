@@ -2,8 +2,8 @@ import "./Sim.sass";
 import "@fontsource/poppins";
 
 import Keyboard, { KeyName } from "../../lib/io/keyboard";
-import { clipPoint, getDirection, getDist, getTurnSign } from "../../lib/math/vector-math";
 import { emptyWorld, generateWorld } from "../../lib/sim/generator";
+import { getDirection, getDist, getTurnSign, wrapPoint } from "../../lib/math/vector-math";
 import { useEffect, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
@@ -29,6 +29,7 @@ export default function Sim() {
   useEffect(() => {
     const onKeyPress = (keyName: KeyName) => {
       if (keyName == Keyboard.Keys.LETTER_P) {
+        console.log(`Updating running from ${running}`);
         setRunning((prevRunning) => !prevRunning);
       }
     };
@@ -105,16 +106,18 @@ export default function Sim() {
     const pheromones: Pheromone[] = [];
     ants.forEach((ant: Ant) => {
       const position = ant.position;
-      const strength = 1;
+      const strength = 1.0;
       const id = crypto.randomUUID();
       if (!ant.carrying) {
-        const decay = 0.001;
         const type = PheromoneType.ALPHA;
-        if (random.dice(100)) pheromones.push({ id, strength, position, type, decay });
+        const decay = 0.004;
+        const probDrop = 0.25;
+        if (random.dice(1 / probDrop)) pheromones.push({ id, strength, position, type, decay });
       } else {
-        const decay = 0.001;
         const type = PheromoneType.BETA;
-        if (random.dice(100)) pheromones.push({ id, strength, position, type, decay });
+        const decay = 0.004;
+        const probDrop = 0.25;
+        if (random.dice(1 / probDrop)) pheromones.push({ id, strength, position, type, decay });
       }
     });
     return pheromones;
@@ -140,22 +143,26 @@ export default function Sim() {
     pheromones: Pheromone[],
     bounds: PointRange
   ): Ant => {
-    const speedRange = { min: 1, max: 2 };
+    const speedRange = { min: 1.5, max: 2.5 };
     const dSpeedRange = { min: -0.1, max: 0.1 };
-    const omegaRange = { min: -Math.PI / 4, max: Math.PI / 4 };
-    const dOmegaRandom = Math.PI / 30;
+    const omegaRange = { min: -Math.PI / 30, max: Math.PI / 30 };
+    const dOmegaRandom = Math.PI / 20;
+    const dOmegaRestore = Math.PI / 20;
 
     // Add randomness for wandering
-    const dOmega = random.next(-dOmegaRandom, dOmegaRandom);
-    let omega = clipScaler(ant.omega + dOmega, omegaRange);
+    let omega = ant.omega;
+    // const dOmega = random.next(-dOmegaRandom, dOmegaRandom);
+    // omega = clipScaler(omega, omegaRange);
+    // omega = clipScaler(omega + (omega > 0 ? dOmegaRandom : -dOmegaRandom), omegaRange);
+    // omega = clipScaler(omega + (omega > 0 ? -dOmegaRestore : dOmegaRestore), omegaRange);
     let theta = ant.theta + omega;
 
-    const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
     let speed = ant.speed;
-    speed = clipScaler(ant.speed + dSpeed, speedRange);
+    // const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
+    // speed = clipScaler(ant.speed + dSpeed, speedRange);
     const vx = Math.cos(theta) * speed;
     const vy = Math.sin(theta) * speed;
-    const position = clipPoint({ x: ant.position.x + vx, y: ant.position.y + vy }, bounds);
+    const position = wrapPoint({ x: ant.position.x + vx, y: ant.position.y + vy }, bounds);
 
     omega = getAntTurning(ant, nutrients, nests, pheromones);
 
@@ -164,7 +171,8 @@ export default function Sim() {
 
   const getAntTurning = (ant: Ant, nutrients: Nutrient[], nests: Nest[], pheromones: Pheromone[]) => {
     // TODO: Refactor omegaRange out of here
-    const omegaRange = { min: -Math.PI / 4, max: Math.PI / 4 };
+    const dOmega = Math.PI / 20;
+    // const omegaRange = { min: -Math.PI / 10, max: Math.PI / 10 };
     let omega = ant.omega;
     if (ant.carrying) {
       // Carrying a nutrient, try to get it back to nest
@@ -174,13 +182,11 @@ export default function Sim() {
         // Head toward nearest nest to drop off nutrients
         const direction = getDirection(ant.position, closestNest.position);
         const turnSign = getTurnSign(ant.theta, direction);
-        omega = turnSign * omegaRange.max;
-        // speed = speedRange.max;
+        omega = -turnSign * dOmega;
       } else {
         // Head toward alpha pheromones that indicate a nest might be close
         const turnSign = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.ALPHA);
-        omega = turnSign * omegaRange.max;
-        // speed = speedRange.max;
+        omega = -turnSign * dOmega;
       }
     } else {
       // Not carrying a nutrient, try to find one to bring back to nest
@@ -198,13 +204,11 @@ export default function Sim() {
         // Head toward nutrients to pick them up
         const direction = getDirection(ant.position, closestNutrient.position);
         const turnSign = getTurnSign(ant.theta, direction);
-        omega = turnSign * omegaRange.max;
-        // speed = speedRange.max;
+        omega = -turnSign * dOmega;
       } else {
         // Head toward beta pheromones that indicate nutrients might be close
         const turnSign = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.BETA);
-        omega = turnSign * omegaRange.max;
-        // speed = speedRange.max;
+        omega = -turnSign * dOmega;
       }
     }
 
@@ -221,7 +225,7 @@ export default function Sim() {
     let rightCount = 0;
     pheromones.forEach((pheromone: Pheromone) => {
       if (pheromone.type != pheromoneType) return;
-      if (getDist(position, pheromone.position) < ant.sightDistance) {
+      if (getDist(position, pheromone.position) < ant.senseDistance) {
         const angle = getDirection(position, pheromone.position);
         if (angle > 0 && angle < ant.sightAngle) rightCount++;
         if (angle < 0 && angle > -ant.sightAngle) leftCount++;
@@ -229,8 +233,16 @@ export default function Sim() {
     });
 
     let turnSign = rightCount == leftCount ? 0 : rightCount > leftCount ? 1 : -1;
-    const ratio = rightCount / (rightCount + leftCount);
-    if (ratio > 0.45 || ratio < 0.55) turnSign = 0;
+    const ratio = (1.0 * leftCount) / (leftCount + rightCount);
+    if (ratio > 0.45 && ratio < 0.55) {
+      turnSign = 0;
+    }
+
+    if (ant.id == "chosen") {
+      const turnLetter = turnSign == 0 ? "X" : turnSign == 1 ? "R" : "L";
+      console.log(`L=${leftCount}, R=${rightCount}, ratio=${ratio} => turn=${turnLetter}`);
+    }
+
     return turnSign;
   };
 

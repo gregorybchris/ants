@@ -1,7 +1,7 @@
 import "./SimGraphics.sass";
 import "@fontsource/poppins";
 
-import { Color, colorToHex, hexToRGB, rgbToString } from "../../lib/graphics/color";
+import { Color, colorToAlpha, colorToHex } from "../../lib/graphics/color";
 import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
@@ -93,7 +93,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
   };
 
   const renderPheromones = (context: CanvasRenderingContext2D) => {
-    const radius = 3;
+    const radius = 2;
     props.world.pheromones.forEach((pheromone: Pheromone) => {
       context.beginPath();
       const position = scaleToCanvas(pheromone.position);
@@ -105,21 +105,19 @@ export default function SimGraphics(props: SimGraphicsProps) {
       else if (pheromone.type == PheromoneType.GAMMA) color = Color.PURPLE;
       else if (pheromone.type == PheromoneType.DELTA) color = Color.YELLOW;
 
-      const rgbColor = hexToRGB(colorToHex(color));
-      const rgbColorString = rgbToString({ ...rgbColor, alpha: pheromone.strength });
-      context.fillStyle = rgbColorString;
+      context.fillStyle = colorToAlpha(color, pheromone.strength);
       context.fill();
     });
   };
 
   const renderNutrients = (context: CanvasRenderingContext2D) => {
-    const radius = 3;
+    const radius = 2;
     const nutrientColor = Color.WHITE;
     props.world.nutrients.forEach((nutrient: Nutrient) => {
       context.beginPath();
       const position = scaleToCanvas(nutrient.position);
       context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
-      context.fillStyle = colorToHex(nutrientColor);
+      context.fillStyle = colorToAlpha(nutrientColor, 0.6);
       context.fill();
     });
   };
@@ -135,6 +133,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
       context.beginPath();
       context.arc(position.x, position.y, antRadius, 0, 2 * Math.PI);
       context.fillStyle = colorToHex(antColor);
+      if (ant.id == "chosen") context.fillStyle = colorToHex(Color.PINK);
       context.fill();
 
       if (ant.carrying) {

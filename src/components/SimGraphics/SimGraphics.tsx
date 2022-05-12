@@ -2,14 +2,13 @@ import "./SimGraphics.sass";
 import "@fontsource/poppins";
 
 import { Color, colorToAlpha, colorToHex } from "../../lib/graphics/color";
+import { Pheromone, PheromoneType } from "../../lib/sim/pheromone";
 import { useEffect, useRef, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
 import Box from "../../lib/data/box";
 import Nest from "../../lib/sim/nest";
 import Nutrient from "../../lib/sim/nutrient";
-import Pheromone from "../../lib/sim/pheromone";
-import { PheromoneType } from "../../lib/sim/pheromone-type";
 import Point from "../../lib/data/point";
 import PointRange from "../../lib/data/point-range";
 import { World } from "../../lib/sim/world";

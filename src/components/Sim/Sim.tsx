@@ -2,21 +2,19 @@ import "./Sim.sass";
 import "@fontsource/poppins";
 
 import Keyboard, { KeyName } from "../../lib/io/keyboard";
+import { Pheromone, PheromoneType, createPheromone } from "../../lib/sim/pheromone";
+import { clipScaler, getDirection, getDist, getTurnAngle, getTurnSign, wrapPoint } from "../../lib/math/vector-math";
 import { emptyWorld, generateWorld } from "../../lib/sim/generator";
-import { getDirection, getDist, getTurnSign, wrapPoint } from "../../lib/math/vector-math";
 import { useEffect, useState } from "react";
 
 import Ant from "../../lib/sim/ant";
 import Nest from "../../lib/sim/nest";
 import Nutrient from "../../lib/sim/nutrient";
-import Pheromone from "../../lib/sim/pheromone";
-import { PheromoneType } from "../../lib/sim/pheromone-type";
 import Point from "../../lib/data/point";
 import PointRange from "../../lib/data/point-range";
 import Random from "../../lib/math/random";
 import SimGraphics from "../SimGraphics/SimGraphics";
 import { World } from "../../lib/sim/world";
-import { clipScaler } from "../../lib/math/vector-math";
 import { max } from "../../lib/math/math-utils";
 
 export default function Sim() {
@@ -54,8 +52,8 @@ export default function Sim() {
     // Move ants
     ants = ants.map((ant: Ant) => moveAnt(ant, nutrients, nests, pheromones, world.bounds));
 
-    // Drop pheromones
-    pheromones = [...pheromones, ...dropPheromones(ants)];
+    // Emit pheromones
+    pheromones = [...pheromones, ...emitPheromones(ants)];
 
     // Decay pheromones
     pheromones = decayPheromones(pheromones);
@@ -63,8 +61,8 @@ export default function Sim() {
     // Pick up nutrients
     nutrients = pickUpNutrients(ants, nutrients);
 
-    // Drop off nutrients
-    dropNutrients(ants, nests);
+    // Deposit nutrients
+    depositNutrients(ants, nests);
 
     return {
       ...world,
@@ -79,10 +77,13 @@ export default function Sim() {
     const nutrientIDsToCarry: string[] = [];
     nutrients.forEach((nutrient: Nutrient) => {
       ants.forEach((ant: Ant) => {
-        if (!ant.carrying && getDist(ant.position, nutrient.position) < touchDistance) {
-          ant.carrying = true;
-          ant.theta += Math.PI;
-          nutrientIDsToCarry.push(nutrient.id);
+        if (getDist(ant.position, nutrient.position) < touchDistance) {
+          if (!ant.carrying) {
+            ant.carrying = true;
+            ant.theta += Math.PI;
+            nutrientIDsToCarry.push(nutrient.id);
+          }
+          ant.certainty = 1;
           return;
         }
       });
@@ -90,34 +91,29 @@ export default function Sim() {
     return nutrients.filter((nutrient) => !nutrientIDsToCarry.includes(nutrient.id));
   };
 
-  const dropNutrients = (ants: Ant[], nests: Nest[]) => {
+  const depositNutrients = (ants: Ant[], nests: Nest[]) => {
     const touchDistance = 5;
     nests.forEach((nest: Nest) => {
       ants.forEach((ant: Ant) => {
-        if (ant.carrying && getDist(ant.position, nest.position) < touchDistance) {
-          ant.carrying = false;
-          ant.theta += Math.PI;
+        if (getDist(ant.position, nest.position) < touchDistance) {
+          if (ant.carrying) {
+            ant.carrying = false;
+            ant.theta += Math.PI;
+          }
+          ant.certainty = 1;
         }
       });
     });
   };
 
-  const dropPheromones = (ants: Ant[]): Pheromone[] => {
+  const emitPheromones = (ants: Ant[]): Pheromone[] => {
     const pheromones: Pheromone[] = [];
     ants.forEach((ant: Ant) => {
-      const position = ant.position;
-      const strength = 1.0;
-      const id = crypto.randomUUID();
-      if (!ant.carrying) {
-        const type = PheromoneType.ALPHA;
-        const decay = 0.004;
-        const probDrop = 0.25;
-        if (random.dice(1 / probDrop)) pheromones.push({ id, strength, position, type, decay });
-      } else {
-        const type = PheromoneType.BETA;
-        const decay = 0.004;
-        const probDrop = 0.25;
-        if (random.dice(1 / probDrop)) pheromones.push({ id, strength, position, type, decay });
+      const type = ant.carrying ? PheromoneType.BETA : PheromoneType.ALPHA;
+      const strength = ant.certainty;
+      const probEmit = 0.4;
+      if (random.dice(1 / probEmit)) {
+        pheromones.push(createPheromone(type, ant.position, strength));
       }
     });
     return pheromones;
@@ -143,52 +139,52 @@ export default function Sim() {
     pheromones: Pheromone[],
     bounds: PointRange
   ): Ant => {
-    const speedRange = { min: 1.5, max: 2.5 };
-    const dSpeedRange = { min: -0.1, max: 0.1 };
-    const omegaRange = { min: -Math.PI / 30, max: Math.PI / 30 };
-    const dOmegaRandom = Math.PI / 20;
-    const dOmegaRestore = Math.PI / 20;
-
-    // Add randomness for wandering
-    let omega = ant.omega;
-    // const dOmega = random.next(-dOmegaRandom, dOmegaRandom);
-    // omega = clipScaler(omega, omegaRange);
-    // omega = clipScaler(omega + (omega > 0 ? dOmegaRandom : -dOmegaRandom), omegaRange);
-    // omega = clipScaler(omega + (omega > 0 ? -dOmegaRestore : dOmegaRestore), omegaRange);
-    let theta = ant.theta + omega;
-
+    let theta = ant.theta;
     let speed = ant.speed;
-    // const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
-    // speed = clipScaler(ant.speed + dSpeed, speedRange);
+    let certainty = ant.certainty;
+
+    // Update angle based on pheromones
+    theta = getAntTurning(ant, nutrients, nests, pheromones);
+
+    // Perturb theta for wandering
+    const dThetaRandom = Math.PI / 30;
+    const dTheta = random.next(-dThetaRandom, dThetaRandom);
+    theta += dTheta;
+
+    // Discount pheromones based on
+    certainty = clipScaler(certainty - ant.discounting, { min: 0, max: 1 });
+
+    // Perturb speed for realism
+    const speedRange = { min: 3.5, max: 4 };
+    const dSpeedRange = { min: -0.1, max: 0.1 };
+    const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
+    speed = clipScaler(ant.speed + dSpeed, speedRange);
+
+    // Update position based on velocity
     const vx = Math.cos(theta) * speed;
     const vy = Math.sin(theta) * speed;
     const position = wrapPoint({ x: ant.position.x + vx, y: ant.position.y + vy }, bounds);
 
-    omega = getAntTurning(ant, nutrients, nests, pheromones);
-
-    return { ...ant, omega, speed, theta, position };
+    return { ...ant, speed, theta, position, certainty };
   };
 
   const getAntTurning = (ant: Ant, nutrients: Nutrient[], nests: Nest[], pheromones: Pheromone[]) => {
-    // TODO: Refactor omegaRange out of here
-    const dOmega = Math.PI / 20;
-    // const omegaRange = { min: -Math.PI / 10, max: Math.PI / 10 };
-    let omega = ant.omega;
+    let theta = ant.theta;
+
     if (ant.carrying) {
       // Carrying a nutrient, try to get it back to nest
       const compare = (a: Nest, b: Nest) => getDist(b.position, ant.position) - getDist(a.position, ant.position);
       const closestNest = max(nests, compare);
       if (getDist(ant.position, closestNest.position) < ant.sightDistance) {
-        // Head toward nearest nest to drop off nutrients
-        const direction = getDirection(ant.position, closestNest.position);
-        const turnSign = getTurnSign(ant.theta, direction);
-        omega = -turnSign * dOmega;
+        // Head toward nearest nest to deposit nutrients
+        theta = getDirection(ant.position, closestNest.position);
       } else {
         // Head toward alpha pheromones that indicate a nest might be close
-        const turnSign = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.ALPHA);
-        omega = -turnSign * dOmega;
+        theta = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.ALPHA);
       }
-    } else {
+    }
+
+    if (!ant.carrying) {
       // Not carrying a nutrient, try to find one to bring back to nest
       let closestNutrient = undefined;
       if (nutrients.length > 0) {
@@ -202,17 +198,14 @@ export default function Sim() {
 
       if (closestNutrient !== undefined) {
         // Head toward nutrients to pick them up
-        const direction = getDirection(ant.position, closestNutrient.position);
-        const turnSign = getTurnSign(ant.theta, direction);
-        omega = -turnSign * dOmega;
+        theta = getDirection(ant.position, closestNutrient.position);
       } else {
         // Head toward beta pheromones that indicate nutrients might be close
-        const turnSign = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.BETA);
-        omega = -turnSign * dOmega;
+        theta = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.BETA);
       }
     }
 
-    return omega;
+    return theta;
   };
 
   const turnTowardPheromones = (
@@ -221,29 +214,25 @@ export default function Sim() {
     position: Point,
     pheromoneType: PheromoneType
   ): number => {
-    let leftCount = 0;
-    let rightCount = 0;
+    let angleSum = 0;
+    let angleCount = 0;
     pheromones.forEach((pheromone: Pheromone) => {
       if (pheromone.type != pheromoneType) return;
-      if (getDist(position, pheromone.position) < ant.senseDistance) {
-        const angle = getDirection(position, pheromone.position);
-        if (angle > 0 && angle < ant.sightAngle) rightCount++;
-        if (angle < 0 && angle > -ant.sightAngle) leftCount++;
+      const pheromoneDist = getDist(position, pheromone.position);
+      if (pheromoneDist < ant.senseDistance && pheromoneDist > 15) {
+        let pheromoneAngle = getDirection(position, pheromone.position) + 2 * Math.PI;
+        pheromoneAngle = pheromoneAngle % (2 * Math.PI);
+        const relativeAngle = getTurnAngle(ant.theta, pheromoneAngle);
+
+        if (Math.abs(relativeAngle) < ant.sightAngle) {
+          angleSum += pheromoneAngle;
+          angleCount++;
+        }
       }
     });
 
-    let turnSign = rightCount == leftCount ? 0 : rightCount > leftCount ? 1 : -1;
-    const ratio = (1.0 * leftCount) / (leftCount + rightCount);
-    if (ratio > 0.45 && ratio < 0.55) {
-      turnSign = 0;
-    }
-
-    if (ant.id == "chosen") {
-      const turnLetter = turnSign == 0 ? "X" : turnSign == 1 ? "R" : "L";
-      console.log(`L=${leftCount}, R=${rightCount}, ratio=${ratio} => turn=${turnLetter}`);
-    }
-
-    return turnSign;
+    if (angleCount == 0) return ant.theta;
+    return angleSum / angleCount;
   };
 
   return (

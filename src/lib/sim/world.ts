@@ -1,7 +1,7 @@
 import Ant from "./ant";
 import Nest from "./nest";
 import Nutrient from "./nutrient";
-import Pheromone from "./pheromone";
+import { Pheromone } from "./pheromone";
 import Point from "../data/point";
 import PointRange from "../data/point-range";
 

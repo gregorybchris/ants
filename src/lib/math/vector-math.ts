@@ -61,6 +61,10 @@ export const getDirection = (pointA: Point, pointB: Point): number => {
   return Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x);
 };
 
+export const getTurnAngle = (theta: number, direction: number): number => {
+  return Math.atan2(Math.sin(theta - direction), Math.cos(theta - direction));
+};
+
 export const getTurnSign = (theta: number, direction: number): number => {
-  return Math.sign(Math.atan2(Math.sin(theta - direction), Math.cos(theta - direction)));
+  return Math.sign(getTurnAngle(theta, direction));
 };

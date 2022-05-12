@@ -16,7 +16,7 @@ export const emptyWorld = (bounds: PointRange) => {
 };
 
 export const generateWorld = (world: World): World => {
-  const random = new Random(6);
+  const random = new Random(1);
 
   // Generate ants
   const numNests = 1;
@@ -33,32 +33,41 @@ export const generateWorld = (world: World): World => {
     };
     nests.push(nest);
 
-    const sightAngle = Math.PI / 3;
-    const sightDistance = 80;
-    const senseDistance = 30;
+    // Populate nests with ants
     for (let j = 0; j < numAntsPerNest; j++) {
       ants.push({
         id: crypto.randomUUID(),
         size: 10,
+
+        // State
         position,
         theta: random.next(0, 2 * Math.PI),
         speed: 3,
         carrying: false,
         certainty: 1.0,
+
+        // Constants
         discounting: 0.004,
-        sightAngle,
-        sightDistance,
-        senseDistance,
+        sightAngle: Math.PI / 4,
+        sightDistance: 80,
+        senseMinDistance: 10,
+        senseMaxDistance: 40,
+        touchDistance: 5,
       });
     }
   }
 
-  // ants[13].id = "chosen";
+  // for (let i = 0; i < 40; i++) {
+  //   if (i % 2 == 1 && i % 3 == 0) {
+  //     ants[i].id = "chosen";
+  //   }
+  // }
+  ants[9].id = "chosen";
 
   // Generate nutrients
   const numNutrientClusters = 4;
-  const numNutrientsPerCluster = 100;
-  const clusterRadius = 30;
+  const numNutrientsPerCluster = 50;
+  const clusterRadius = 20;
   const nutrients: Nutrient[] = [];
   for (let i = 0; i < numNutrientClusters; i++) {
     const clusterX = random.next(world.bounds.x.min, world.bounds.x.max);

@@ -73,11 +73,10 @@ export default function Sim() {
   };
 
   const pickUpNutrients = (ants: Ant[], nutrients: Nutrient[]): Nutrient[] => {
-    const touchDistance = 5;
     const nutrientIDsToCarry: string[] = [];
     nutrients.forEach((nutrient: Nutrient) => {
       ants.forEach((ant: Ant) => {
-        if (getDist(ant.position, nutrient.position) < touchDistance) {
+        if (getDist(ant.position, nutrient.position) < ant.touchDistance) {
           if (!ant.carrying) {
             ant.carrying = true;
             ant.theta += Math.PI;
@@ -92,10 +91,9 @@ export default function Sim() {
   };
 
   const depositNutrients = (ants: Ant[], nests: Nest[]) => {
-    const touchDistance = 5;
     nests.forEach((nest: Nest) => {
       ants.forEach((ant: Ant) => {
-        if (getDist(ant.position, nest.position) < touchDistance) {
+        if (getDist(ant.position, nest.position) < ant.touchDistance) {
           if (ant.carrying) {
             ant.carrying = false;
             ant.theta += Math.PI;
@@ -144,10 +142,10 @@ export default function Sim() {
     let certainty = ant.certainty;
 
     // Update angle based on pheromones
-    theta = getAntTurning(ant, nutrients, nests, pheromones);
+    theta = getAntAngle(ant, nutrients, nests, pheromones);
 
     // Perturb theta for wandering
-    const dThetaRandom = Math.PI / 30;
+    const dThetaRandom = Math.PI / 50;
     const dTheta = random.next(-dThetaRandom, dThetaRandom);
     theta += dTheta;
 
@@ -168,47 +166,53 @@ export default function Sim() {
     return { ...ant, speed, theta, position, certainty };
   };
 
-  const getAntTurning = (ant: Ant, nutrients: Nutrient[], nests: Nest[], pheromones: Pheromone[]) => {
-    let theta = ant.theta;
-
+  const getAntAngle = (ant: Ant, nutrients: Nutrient[], nests: Nest[], pheromones: Pheromone[]) => {
     if (ant.carrying) {
       // Carrying a nutrient, try to get it back to nest
-      const compare = (a: Nest, b: Nest) => getDist(b.position, ant.position) - getDist(a.position, ant.position);
-      const closestNest = max(nests, compare);
+      const closestNest = findClosestNest(ant, nests);
       if (getDist(ant.position, closestNest.position) < ant.sightDistance) {
         // Head toward nearest nest to deposit nutrients
-        theta = getDirection(ant.position, closestNest.position);
+        return getDirection(ant.position, closestNest.position);
       } else {
         // Head toward alpha pheromones that indicate a nest might be close
-        theta = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.ALPHA);
+        return getMaxPheromoneAngle(ant, pheromones, ant.position, PheromoneType.ALPHA);
       }
     }
 
     if (!ant.carrying) {
       // Not carrying a nutrient, try to find one to bring back to nest
-      let closestNutrient = undefined;
-      if (nutrients.length > 0) {
-        const compare = (a: Nutrient, b: Nutrient) =>
-          getDist(b.position, ant.position) - getDist(a.position, ant.position);
-        closestNutrient = max(nutrients, compare);
-        if (getDist(ant.position, closestNutrient.position) > ant.sightDistance) {
-          closestNutrient = undefined;
-        }
-      }
-
+      const closestNutrient = findClosestNutrient(ant, nutrients);
       if (closestNutrient !== undefined) {
         // Head toward nutrients to pick them up
-        theta = getDirection(ant.position, closestNutrient.position);
+        return getDirection(ant.position, closestNutrient.position);
       } else {
         // Head toward beta pheromones that indicate nutrients might be close
-        theta = turnTowardPheromones(ant, pheromones, ant.position, PheromoneType.BETA);
+        return getMaxPheromoneAngle(ant, pheromones, ant.position, PheromoneType.BETA);
       }
     }
 
-    return theta;
+    return ant.theta;
   };
 
-  const turnTowardPheromones = (
+  const findClosestNutrient = (ant: Ant, nutrients: Nutrient[]): Nutrient | undefined => {
+    let closestNutrient = undefined;
+    if (nutrients.length > 0) {
+      const compare = (a: Nutrient, b: Nutrient) =>
+        getDist(b.position, ant.position) - getDist(a.position, ant.position);
+      closestNutrient = max(nutrients, compare);
+      if (getDist(ant.position, closestNutrient.position) > ant.sightDistance) {
+        closestNutrient = undefined;
+      }
+    }
+    return closestNutrient;
+  };
+
+  const findClosestNest = (ant: Ant, nests: Nest[]): Nest => {
+    const compare = (a: Nest, b: Nest) => getDist(b.position, ant.position) - getDist(a.position, ant.position);
+    return max(nests, compare);
+  };
+
+  const getMaxPheromoneAngle = (
     ant: Ant,
     pheromones: Pheromone[],
     position: Point,
@@ -219,7 +223,7 @@ export default function Sim() {
     pheromones.forEach((pheromone: Pheromone) => {
       if (pheromone.type != pheromoneType) return;
       const pheromoneDist = getDist(position, pheromone.position);
-      if (pheromoneDist < ant.senseDistance && pheromoneDist > 15) {
+      if (pheromoneDist < ant.senseMaxDistance && pheromoneDist > ant.senseMinDistance) {
         let pheromoneAngle = getDirection(position, pheromone.position) + 2 * Math.PI;
         pheromoneAngle = pheromoneAngle % (2 * Math.PI);
         const relativeAngle = getTurnAngle(ant.theta, pheromoneAngle);
@@ -230,6 +234,10 @@ export default function Sim() {
         }
       }
     });
+
+    // if (ant.id == "chosen") {
+    //   console.log(angleCount, angleSum / angleCount);
+    // }
 
     if (angleCount == 0) return ant.theta;
     return angleSum / angleCount;

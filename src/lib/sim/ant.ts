@@ -9,5 +9,7 @@ export default interface Ant extends Entity {
   discounting: number;
   sightAngle: number;
   sightDistance: number;
-  senseDistance: number;
+  senseMinDistance: number;
+  senseMaxDistance: number;
+  touchDistance: number;
 }

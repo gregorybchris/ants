@@ -1,53 +1,38 @@
 import Point from "../data/point";
 import PointRange from "../data/point-range";
 import Range from "../data/range";
-import Vector from "../data/vector";
 
-export const rotate = (vector: Vector, theta: number): Vector => {
-  const x = vector.x * Math.cos(theta) - vector.y * Math.sin(theta);
-  const y = vector.x * Math.sin(theta) + vector.y * Math.cos(theta);
-  return { x, y };
+export const clipScalar = (scalar: number, range: Range) => {
+  return Math.max(Math.min(scalar, range.max), range.min);
 };
 
-export const clipScaler = (scaler: number, range: Range) => {
-  return Math.max(Math.min(scaler, range.max), range.min);
+export const scaleScalar = (scalar: number, fromRange: Range, toRange: Range): number => {
+  const inter = (scalar - fromRange.min) / (fromRange.max - fromRange.min);
+  return inter * (toRange.max - toRange.min) + toRange.min;
 };
 
-export const wrapScaler = (scaler: number, range: Range) => {
+export const scalePoint = (point: Point, fromRange: PointRange, toRange: PointRange): Point => {
+  return {
+    x: scaleScalar(point.x, fromRange.x, toRange.x),
+    y: scaleScalar(point.y, fromRange.y, toRange.y),
+  };
+};
+
+export const wrapScalar = (scalar: number, range: Range) => {
   const interval = range.max - range.min;
-  while (scaler < range.min) {
-    scaler += interval;
+  while (scalar < range.min) {
+    scalar += interval;
   }
-  while (scaler > range.max) {
-    scaler -= interval;
+  while (scalar > range.max) {
+    scalar -= interval;
   }
-  return scaler;
-};
-
-export const clipMagnitude = (vector: Vector, range: Range) => {
-  const oldMagnitude = Math.sqrt(vector.x * vector.x + vector.y + vector.y);
-  const newMagnitude = clipScaler(oldMagnitude, range);
-  return scale(vector, newMagnitude / oldMagnitude);
-};
-
-export const scale = (vector: Vector, factor: number) => {
-  return {
-    x: vector.x * factor,
-    y: vector.y * factor,
-  };
-};
-
-export const clipPoint = (point: Point, pointRange: PointRange): Point => {
-  return {
-    x: clipScaler(point.x, pointRange.x),
-    y: clipScaler(point.y, pointRange.y),
-  };
+  return scalar;
 };
 
 export const wrapPoint = (point: Point, pointRange: PointRange): Point => {
   return {
-    x: wrapScaler(point.x, pointRange.x),
-    y: wrapScaler(point.y, pointRange.y),
+    x: wrapScalar(point.x, pointRange.x),
+    y: wrapScalar(point.y, pointRange.y),
   };
 };
 
@@ -67,4 +52,12 @@ export const getTurnAngle = (theta: number, direction: number): number => {
 
 export const getTurnSign = (theta: number, direction: number): number => {
   return Math.sign(getTurnAngle(theta, direction));
+};
+
+export const scalarInRange = (scalar: number, range: Range): boolean => {
+  return scalar >= range.min && scalar <= range.max;
+};
+
+export const pointInRange = (point: Point, range: PointRange): boolean => {
+  return scalarInRange(point.x, range.x) && scalarInRange(point.y, range.y);
 };

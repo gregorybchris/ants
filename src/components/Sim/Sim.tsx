@@ -3,7 +3,7 @@ import "@fontsource/poppins";
 
 import Keyboard, { KeyName } from "../../lib/io/keyboard";
 import { Pheromone, PheromoneType, createPheromone } from "../../lib/sim/pheromone";
-import { clipScaler, getDirection, getDist, getTurnAngle, getTurnSign, wrapPoint } from "../../lib/math/vector-math";
+import { clipScalar, getDirection, getDist, getTurnAngle, scalarInRange, wrapPoint } from "../../lib/math/vector-math";
 import { emptyWorld, generateWorld } from "../../lib/sim/generator";
 import { useEffect, useState } from "react";
 
@@ -150,13 +150,13 @@ export default function Sim() {
     theta += dTheta;
 
     // Discount pheromones based on
-    certainty = clipScaler(certainty - ant.discounting, { min: 0, max: 1 });
+    certainty = clipScalar(certainty - ant.discounting, { min: 0, max: 1 });
 
     // Perturb speed for realism
     const speedRange = { min: 3.5, max: 4 };
     const dSpeedRange = { min: -0.1, max: 0.1 };
     const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
-    speed = clipScaler(ant.speed + dSpeed, speedRange);
+    speed = clipScalar(ant.speed + dSpeed, speedRange);
 
     // Update position based on velocity
     const vx = Math.cos(theta) * speed;
@@ -223,7 +223,7 @@ export default function Sim() {
     pheromones.forEach((pheromone: Pheromone) => {
       if (pheromone.type != pheromoneType) return;
       const pheromoneDist = getDist(position, pheromone.position);
-      if (pheromoneDist < ant.senseMaxDistance && pheromoneDist > ant.senseMinDistance) {
+      if (scalarInRange(pheromoneDist, ant.senseRange)) {
         let pheromoneAngle = getDirection(position, pheromone.position) + 2 * Math.PI;
         pheromoneAngle = pheromoneAngle % (2 * Math.PI);
         const relativeAngle = getTurnAngle(ant.theta, pheromoneAngle);

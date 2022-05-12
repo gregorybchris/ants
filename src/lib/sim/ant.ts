@@ -1,4 +1,5 @@
 import Entity from "./entity";
+import Range from "../data/range";
 
 export default interface Ant extends Entity {
   size: number;
@@ -9,7 +10,6 @@ export default interface Ant extends Entity {
   discounting: number;
   sightAngle: number;
   sightDistance: number;
-  senseMinDistance: number;
-  senseMaxDistance: number;
+  senseRange: Range;
   touchDistance: number;
 }

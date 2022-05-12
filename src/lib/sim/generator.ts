@@ -50,8 +50,7 @@ export const generateWorld = (world: World): World => {
         discounting: 0.004,
         sightAngle: Math.PI / 4,
         sightDistance: 80,
-        senseMinDistance: 10,
-        senseMaxDistance: 40,
+        senseRange: { min: 10, max: 40 },
         touchDistance: 5,
       });
     }
@@ -62,7 +61,7 @@ export const generateWorld = (world: World): World => {
   //     ants[i].id = "chosen";
   //   }
   // }
-  ants[9].id = "chosen";
+  // ants[9].id = "chosen";
 
   // Generate nutrients
   const numNutrientClusters = 4;

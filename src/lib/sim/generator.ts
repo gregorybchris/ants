@@ -50,7 +50,7 @@ export const generateWorld = (world: World): World => {
         discounting: 0.004,
         sightAngle: Math.PI / 4,
         sightDistance: 80,
-        senseRange: { min: 10, max: 40 },
+        senseRange: { min: 10, max: 50 },
         touchDistance: 5,
       });
     }

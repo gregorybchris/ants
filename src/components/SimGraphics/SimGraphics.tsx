@@ -67,7 +67,7 @@ export default function SimGraphics(props: SimGraphicsProps) {
   const scaleToCanvas = (point: Point): Point => {
     const b = props.bounds;
     const x = ((point.x - b.x.min) / (b.x.max - b.x.min)) * canvasSize.width;
-    const y = canvasSize.height - ((point.y - b.x.min) / (b.y.max - b.y.min)) * canvasSize.height;
+    const y = canvasSize.height - ((point.y - b.y.min) / (b.y.max - b.y.min)) * canvasSize.height;
     return { x, y };
   };
 

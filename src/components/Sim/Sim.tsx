@@ -40,17 +40,17 @@ export default function Sim() {
 
   const update = (deltaTime: number) => {
     setTicks((prevTicks) => prevTicks + 1);
-    setWorld(updateWorld);
+    setWorld((world) => updateWorld(world, deltaTime));
   };
 
-  const updateWorld = (world: World): World => {
+  const updateWorld = (world: World, deltaTime: number): World => {
     let ants = world.ants;
     let pheromones = world.pheromones;
     let nutrients = world.nutrients;
     let nests = world.nests;
 
     // Move ants
-    ants = ants.map((ant: Ant) => moveAnt(ant, nutrients, nests, pheromones, world.bounds));
+    ants = ants.map((ant: Ant) => moveAnt(ant, nutrients, nests, pheromones, world.bounds, deltaTime));
 
     // Emit pheromones
     pheromones = [...pheromones, ...emitPheromones(ants)];
@@ -135,7 +135,8 @@ export default function Sim() {
     nutrients: Nutrient[],
     nests: Nest[],
     pheromones: Pheromone[],
-    bounds: PointRange
+    bounds: PointRange,
+    deltaTime: number
   ): Ant => {
     let theta = ant.theta;
     let speed = ant.speed;
@@ -158,9 +159,14 @@ export default function Sim() {
     const dSpeed = random.next(dSpeedRange.min, dSpeedRange.max);
     speed = clipScalar(ant.speed + dSpeed, speedRange);
 
-    // Update position based on velocity
-    const vx = Math.cos(theta) * speed;
-    const vy = Math.sin(theta) * speed;
+    // Update position based on velocity. Scale the step by elapsed time so an
+    // ant's speed is independent of frame rate. deltaTime is normalized to a
+    // 60fps frame and clamped so a long frame (e.g. after the tab was
+    // backgrounded) can't teleport ants across the world.
+    const targetFrameMs = 1000 / 60;
+    const frameScale = clipScalar(deltaTime / targetFrameMs, { min: 0, max: 3 });
+    const vx = Math.cos(theta) * speed * frameScale;
+    const vy = Math.sin(theta) * speed * frameScale;
     const position = wrapPoint({ x: ant.position.x + vx, y: ant.position.y + vy }, bounds);
 
     return { ...ant, speed, theta, position, certainty };
@@ -218,29 +224,29 @@ export default function Sim() {
     position: Point,
     pheromoneType: PheromoneType
   ): number => {
-    let angleSum = 0;
+    // Average the in-sight pheromone directions as unit vectors. Summing raw
+    // angles is wrong because they wrap at 0/2π, which makes headings that
+    // straddle that seam average to the opposite direction.
+    let sinSum = 0;
+    let cosSum = 0;
     let angleCount = 0;
     pheromones.forEach((pheromone: Pheromone) => {
       if (pheromone.type != pheromoneType) return;
       const pheromoneDist = getDist(position, pheromone.position);
       if (scalarInRange(pheromoneDist, ant.senseRange)) {
-        let pheromoneAngle = getDirection(position, pheromone.position) + 2 * Math.PI;
-        pheromoneAngle = pheromoneAngle % (2 * Math.PI);
+        const pheromoneAngle = getDirection(position, pheromone.position);
         const relativeAngle = getTurnAngle(ant.theta, pheromoneAngle);
 
         if (Math.abs(relativeAngle) < ant.sightAngle) {
-          angleSum += pheromoneAngle;
+          sinSum += Math.sin(pheromoneAngle);
+          cosSum += Math.cos(pheromoneAngle);
           angleCount++;
         }
       }
     });
 
-    // if (ant.id == "chosen") {
-    //   console.log(angleCount, angleSum / angleCount);
-    // }
-
     if (angleCount == 0) return ant.theta;
-    return angleSum / angleCount;
+    return Math.atan2(sinSum, cosSum);
   };
 
   return (

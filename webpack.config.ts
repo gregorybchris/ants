@@ -16,10 +16,14 @@ module.exports = {
     open: true,
     port: PORT,
     static: {
-      directory: path.resolve(__dirname, "dist"),
+      directory: path.resolve(__dirname, "docs"),
     },
   },
   output: {
+    // Build straight into docs/, which GitHub Pages serves as the site root
+    // (Settings > Pages: gh-pages branch, /docs folder). No manual copy step.
+    path: path.resolve(__dirname, "docs"),
+    clean: true,
     publicPath: "auto",
   },
   resolve: {
@@ -55,6 +59,11 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "./public/index.html"),
+    }),
+    // Emit .nojekyll so GitHub Pages serves the build as-is instead of running
+    // it through Jekyll. Copied as a real asset, so output.clean keeps it.
+    new CopyPlugin({
+      patterns: [{ from: path.resolve(__dirname, "./public/.nojekyll"), to: "." }],
     }),
   ],
 };

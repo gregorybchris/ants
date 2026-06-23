@@ -53,8 +53,8 @@
   "scripts": {
     "start": "webpack serve --open --mode development",
     "build": "webpack --mode production",
-    "serve": "serve dist -p 3001",
-    "clean": "rm -rf dist"
+    "serve": "serve docs -p 3001",
+    "clean": "rm -rf docs"
   },
   "eslintConfig": {
     "extends": [

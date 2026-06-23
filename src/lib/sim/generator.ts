@@ -20,7 +20,7 @@ export const generateWorld = (world: World): World => {
 
   // Generate ants
   const numNests = 1;
-  const numAntsPerNest = 40;
+  const numAntsPerNest = 60;
   const nests: Nest[] = [];
   const ants: Ant[] = [];
   for (let i = 0; i < numNests; i++) {
@@ -65,7 +65,7 @@ export const generateWorld = (world: World): World => {
 
   // Generate nutrients
   const numNutrientClusters = 4;
-  const numNutrientsPerCluster = 50;
+  const numNutrientsPerCluster = 100;
   const clusterRadius = 20;
   const nutrients: Nutrient[] = [];
   for (let i = 0; i < numNutrientClusters; i++) {

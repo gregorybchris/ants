@@ -150,6 +150,15 @@ export default function Sim() {
     const dTheta = random.next(-dThetaRandom, dThetaRandom);
     theta += dTheta;
 
+    // Occasionally inject a larger random heading change ("exploration"). This
+    // breaks the symmetry that makes the colony lock onto the first jagged
+    // trail, so routes straighten and smooth out faster over many ticks.
+    const exploreProb = 0.15;
+    const exploreAngle = Math.PI / 8;
+    if (random.dice(1 / exploreProb)) {
+      theta += random.next(-exploreAngle, exploreAngle);
+    }
+
     // Discount pheromones based on
     certainty = clipScalar(certainty - ant.discounting, { min: 0, max: 1 });
 
